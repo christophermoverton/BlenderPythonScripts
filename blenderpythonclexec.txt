@@ -1,0 +1,6 @@
+At the python conole enter filename, and then enter the 'exec...' line
+
+filename = "/home/strangequark2/BlenderPythonScripts/insetextrude.py"
+exec(compile(open(filename).read(), filename, 'exec'))
+
+

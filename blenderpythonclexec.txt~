@@ -1,0 +1,7 @@
+At the python conole enter filename, and then enter the 'exec...' line
+
+filename = "/home/strangequark2/BlenderPythonScripts/insetextrude.py"
+exec(compile(open(filename).read(), filename, 'exec'))
+
+filename2 = "/home/strangequark2/selectedvertices.py"
+exec(compile(open(filename2).read(), filename2, 'exec'))
