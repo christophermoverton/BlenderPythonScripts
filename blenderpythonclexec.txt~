@@ -1,7 +1,10 @@
-At the python conole enter filename, and then enter the 'exec...' line
+At the python conole enter filename, and then enter the 'exec...' line at your given path. Mine shown
+by example below for linux.
+The windows path version I believe, for example, would be given by 
+'filename = \\home\\strangequark2\\...' and so forth or '\\' between
+windows folder/directories for proper python pathing.
 
 filename = "/home/strangequark2/BlenderPythonScripts/insetextrude.py"
 exec(compile(open(filename).read(), filename, 'exec'))
 
-filename2 = "/home/strangequark2/selectedvertices.py"
-exec(compile(open(filename2).read(), filename2, 'exec'))
+
