@@ -17,8 +17,8 @@ vertstofaces = {}
 facetoverts = {}
 facetofaces = {}
 operatefaces = 2
-dimx = 2  ## can change >= 2
-dimy = 2 ## can change >= 2 
+dimx = 4  ## can change >= 2
+dimy = 4 ## can change >= 2 
 TFACES = 0
 COLSIZE = None
 ZCOUNT = 0  ## do not modify this
@@ -393,6 +393,9 @@ if dimx > 2 or dimy > 2:
                            picks.append(ipicks[2])
                      elif not top and not front:
                         picks.append(ipicks[3])
+                  else:
+                     for ipick in ipicks:
+                        picks.append(ipick)
          processselect3.append(picks)
 else:
    processselect3 = processselect2
