@@ -17,6 +17,11 @@ vertstofaces = {}
 facetoverts = {}
 facetofaces = {}
 operatefaces = 2
+dimx = 2  ## can change >= 2
+dimy = 2 ## can change >= 2 
+TFACES = 0
+COLSIZE = None
+ZCOUNT = 0  ## do not modify this
 ##get selected faces
 i = 0
 facetoindex = {}
@@ -25,6 +30,8 @@ for face in faces:
       selectedfaces.append(face)
       facetoindex[i] = face
    i += 1
+TFACES = i
+print("TFaces: ", TFACES)
 ##get facetofaces (neighboring faces for each selected face)
 for face in selectedfaces:
    verts = face.vertices
@@ -91,6 +98,7 @@ def findadjface(face, facetofaces, exclusion):
       if not nf in exclusion:
          nfs.append(nf)
    nnfs = []
+
    nnffind = None
    ##intesect nnf find
    nnffindc = False
@@ -107,6 +115,8 @@ def findadjface(face, facetofaces, exclusion):
       if nnffindc:
          break
    ##print("nnfs: ",nnfs)
+   if len(nfs) < 3:
+      nfs.append(None)
    nfs.append(nnffind)
    return (nfs,nnffind)
 
@@ -121,6 +131,7 @@ def chooseoppositepick(faces, facetofaces, exclusion, facetoverts):
    countdict = {}
    nonadjdict = {}
    pick = None
+   pick2 = None
    for face in faces:
       count = 0
 ##      countpos = 0
@@ -135,34 +146,52 @@ def chooseoppositepick(faces, facetofaces, exclusion, facetoverts):
                  sharedverts.append(vert)
               else:
                  nonadj = False
-##            countposdict[nface] = countpos  ##checking adjacency
-##         countpos += 1
-##      if not len(countposdict)==0:
-##         prevkey = countposdict[list(countposdict.keys())[0]]
-##         for key in list(countposdict.keys()):
-##            if abs(prevkey - countposdict[key])>1:
-##               nonadj = True
-##            prevkey = countposdict[key]
-##      if nonadj:
-##         nonadjdict[face] = True
-##      else:
-##         nonadjdict[face] = False
+
             
       countdict[face] = count
       nonadjdict[face] = nonadj
-   if countdict[faces[0]] < countdict[faces[1]]:
+   c1 = False
+   c2 = False
+   if COLSIZE == None:
+      c1 = countdict[faces[0]] == 0 and ZCOUNT > 1
+      c2 = countdict[faces[1]] == 0 and ZCOUNT > 1
+   else:
+      c1 = countdict[faces[0]] == 0 and ZCOUNT > int((TFACES/COLSIZE)/2-2)
+      c2 = countdict[faces[1]] == 0 and ZCOUNT > int((TFACES/COLSIZE)/2-2)      
+   if countdict[faces[0]] < countdict[faces[1]]: ##and c1:
       pick = faces[0]
-   elif countdict[faces[0]] > countdict[faces[1]]:
+##   elif countdict[faces[0]] < countdict[faces[1]] and not c1:
+##      pick = faces[1]
+   elif countdict[faces[0]] > countdict[faces[1]]: ## and c2:
       pick = faces[1]
+##   elif countdict[faces[0]] > countdict[faces[1]] and not c2:
+##      pick = faces[0]
    elif countdict[faces[0]] == countdict[faces[1]]:
       if nonadjdict[faces[0]]:
          pick = faces[1]
       else:
          pick = faces[0]
-   return pick
+   if countdict[faces[0]] < countdict[faces[1]] and c1:
+      pick2 = faces[1]
+   elif countdict[faces[0]] < countdict[faces[1]] and not c1:
+      pick2 = faces[0]
+   elif countdict[faces[0]] > countdict[faces[1]] and c2:
+      pick2 = faces[0]
+   elif countdict[faces[0]] > countdict[faces[1]] and not c2:
+      pick2 = faces[1]
+   else:
+      pick2 = pick
+   c1 = countdict[faces[0]] == 0
+   c2 = countdict[faces[1]] == 0
+   if c1 or c2:
+      global ZCOUNT
+      
+      ZCOUNT += 1
+   return pick, pick2
 
 processselect2 = []
 orderedfacelist=[]
+directionlist = []
 ccheck = False
 
 ##if minv == 1:
@@ -170,6 +199,8 @@ ccheck = False
 if minv == 2:
 
    ccheck = True
+columnsize = None
+rowsize = None
 for face in facetofacesk:
    ##orderedfacelist = [facetofacesk[0]]
 
@@ -182,18 +213,29 @@ for face in facetofacesk:
          pick = face
          ##print("pick at while loop start: ", pick)
          i = 0
+         j = 0 
+         
          while ((pick not in orderedfacelist) and i <100):
             ##orderedfacelist.append(pick)
 
             picks,cornerf = findadjface(pick, facetofaces, orderedfacelist)
+            revisedpicks = []
             for pick in picks:
-               orderedfacelist.append(pick)
-            processselect2.append(picks)
+               if not pick == None:
+                  orderedfacelist.append(pick)
+                  revisedpicks.append(pick)
+            processselect2.append(revisedpicks)
             ##print("orderedfacelist: ",orderedfacelist)
             ##print("picks: ",picks)
             contingents = [picks[1],picks[2]]
-            pick = chooseoppositepick(contingents, facetofaces,
-                                      orderedfacelist, facetoverts)
+            if not None in contingents:
+               pick, pick2 = chooseoppositepick(contingents, facetofaces,
+                                               orderedfacelist, facetoverts)
+               if pick2 != None:
+                  
+                  directionlist.append(pick2)
+            else:
+               pick = None
             ##print("pick: ", pick)
             if firstcolumn:
                for tpick in contingents:
@@ -204,16 +246,22 @@ for face in facetofacesk:
                      firstcolumn = False
                      ##print("nrpick: ", nrpick)
                      break
-            pick = getneighborpick(pick, facetofaces, orderedfacelist)
+            if not pick == None:
+               pick = getneighborpick(pick, facetofaces, orderedfacelist)
             
             ##print("pick: ", pick)
             if pick == None:
                pick = nrpick
                firstcolumn = True
+               if columnsize == None:
+                  columnsize = i+1
+                  COLSIZE = columnsize*2
+               j += 1
             if pick == None:
                pick = picks[0]
             ##print("final pick: ", pick)
-            i+=1       
+            i+=1
+         rowsize = j-2
       else:
          orderedfacelist.append(face)
          pick = facetofaces[face][0]
@@ -226,7 +274,130 @@ for face in facetofacesk:
                else:
                   pick = face
             i+=1
-   
+processselect3 = []
+totalcolumns = 2*columnsize
+totalrows = 2*rowsize
+rcolumnsize = int(totalcolumns/dimx)
+rrowsize = int(totalrows/dimy)
+print("Column size: ", columnsize)
+print("Row size: ", rowsize)
+print("RRow Size: ", rrowsize)
+print("RColumn Size: ", rcolumnsize)
+print("direction list: ", directionlist)
+if dimx > 2 or dimy > 2:
+   partialx = False
+   partialy = False
+   rangex = int(dimx/2)
+   rangey = int(dimy/2)
+   if dimx%2 != 0:
+      partialx = True
+      rangex = int(dimx/2)+1
+   if dimy%2 != 0:
+      partialy = True
+      rangey = int(dimy/2)+1
+   for i in range(0,rrowsize):
+      top = False
+      if partialy:
+         if i%2 == 0:
+            top = True
+         else:
+            top = False
+      for j in range(0,rcolumnsize):
+         picks = []
+         front = False
+         if partialx:
+            if j%2 == 0:
+               front = True
+            else:
+               front = False
+         cr = i%2 == 0
+         cc = j%2 == 0         
+         for k in range(0,rangex):
+            for l in range(0,rangey):
+               ##check row and column
+
+               t1 = False
+               t2 = False
+               if cr and cc:
+                  t1 = k==int(dimx/2)
+                  t2 = l==int(dimy/2)
+               elif cr and not cc:
+                  t1 = k==0
+                  t2 = l==int(dimy/2)
+               elif not cr and cc:
+                  t1 = k==int(dimx/2)
+                  t2 = l==0
+               elif not cr and not cc:
+                  t1 = k==0
+                  t2 = l==0
+                  
+               coordx = k + int((dimx*j)/2)
+               coordy = l + int((dimy*i)/2)
+               coord = coordx + coordy*columnsize
+               print("coord: ", coord)
+               ipicks = processselect2[coord]
+               if t1 and not t2:
+                  if partialx:
+                     if front:
+                        if ipicks[1] in directionlist:
+                           picks.append(ipicks[0])
+                           picks.append(ipicks[2])
+                        else:
+                           picks.append(ipicks[0])
+                           picks.append(ipicks[1])
+                     else:
+                        if ipicks[1] in directionlist:
+                           picks.append(ipicks[3])
+                           picks.append(ipicks[1])
+                        else:
+                           picks.append(ipicks[3])
+                           picks.append(ipicks[2])
+                  else:
+                     for ipick in ipicks:
+                        picks.append(ipick)
+               elif not t1 and not t2:
+                  for ipick in ipicks:
+                     picks.append(ipick)
+               elif not t1 and t2:
+                  if partialy:
+                     if not top:
+                        if ipicks[1] in directionlist:
+                           picks.append(ipicks[3])
+                           picks.append(ipicks[2])
+                        else:
+                           picks.append(ipicks[3])
+                           picks.append(ipicks[1])
+                     else:
+                        if ipicks[1] in directionlist:
+                           picks.append(ipicks[0])
+                           picks.append(ipicks[1])
+                        else:
+                           picks.append(ipicks[0])
+                           picks.append(ipicks[2])
+                  else:
+                     for ipick in ipicks:
+                        picks.append(ipick)
+               elif t1 and t2:
+                  if partialx and partialy:
+                     if top and front:
+                        picks.append(ipicks[0])
+                     elif not top and front:
+                        if ipicks[1] in directionlist:
+                           picks.append(ipicks[2])
+                        else:
+                           picks.append(ipicks[1])
+                     elif top and not front:
+                        if ipicks[1] in directionlist:
+                           picks.append(ipicks[1])
+                        else:
+                           picks.append(ipicks[2])
+                     elif not top and not front:
+                        picks.append(ipicks[3])
+         processselect3.append(picks)
+else:
+   processselect3 = processselect2
+         
+processselect2 = processselect3                          
 print(orderedfacelist)
 print("minv: ", minv)
 print("Process select: ", processselect2)
