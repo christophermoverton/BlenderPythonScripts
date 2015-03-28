@@ -17,8 +17,8 @@ vertstofaces = {}
 facetoverts = {}
 facetofaces = {}
 operatefaces = 2
-dimx = 4  ## can change >= 2
-dimy = 4 ## can change >= 2 
+dimx = 3  ## can change >= 2
+dimy = 3 ## can change >= 2 
 TFACES = 0
 COLSIZE = None
 ZCOUNT = 0  ## do not modify this
@@ -274,11 +274,17 @@ for face in facetofacesk:
                else:
                   pick = face
             i+=1
+rowsize = int((TFACES/COLSIZE)/2)
 processselect3 = []
 totalcolumns = 2*columnsize
 totalrows = 2*rowsize
 rcolumnsize = int(totalcolumns/dimx)
+if totalcolumns/dimx - rcolumnsize > 0:
+   rcolumnsize += 1
 rrowsize = int(totalrows/dimy)
+if totalrows/dimy - rrowsize > 0:
+   rrowsize += 1
+print("Process select2: ", processselect2)
 print("Column size: ", columnsize)
 print("Row size: ", rowsize)
 print("RRow Size: ", rrowsize)
@@ -334,8 +340,14 @@ if dimx > 2 or dimy > 2:
                coordx = k + int((dimx*j)/2)
                coordy = l + int((dimy*i)/2)
                coord = coordx + coordy*columnsize
+               ipicks = []
                print("coord: ", coord)
-               ipicks = processselect2[coord]
+               if coordx*2 >= totalcolumns:
+                  continue
+               if coord <= len(processselect2)-1:
+                  ipicks = processselect2[coord]
+               else:
+                  continue
                if t1 and not t2:
                   if partialx:
                      if front:
