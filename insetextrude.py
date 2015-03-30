@@ -349,46 +349,66 @@ if dimx > 2 or dimy > 2:
                else:
                   continue
                if t1 and not t2:
-                  if partialx:
-                     if front:
-                        if ipicks[1] in directionlist:
-                           picks.append(ipicks[0])
-                           picks.append(ipicks[2])
+                  if len(ipicks) == 4:
+                     if partialx:
+                        if front:
+                           if ipicks[1] in directionlist:
+                              picks.append(ipicks[0])
+                              picks.append(ipicks[2])
+                           else:
+                              picks.append(ipicks[0])
+                              picks.append(ipicks[1])
                         else:
+                           if ipicks[1] in directionlist:
+                              picks.append(ipicks[3])
+                              picks.append(ipicks[1])
+                           else:
+                              picks.append(ipicks[3])
+                              picks.append(ipicks[2])
+                     else:
+                        for ipick in ipicks:
+                           picks.append(ipick)
+                  else:
+                     if partialx:
+                        if front:
                            picks.append(ipicks[0])
+                        else:
                            picks.append(ipicks[1])
                      else:
-                        if ipicks[1] in directionlist:
-                           picks.append(ipicks[3])
-                           picks.append(ipicks[1])
-                        else:
-                           picks.append(ipicks[3])
-                           picks.append(ipicks[2])
-                  else:
-                     for ipick in ipicks:
-                        picks.append(ipick)
+                        for ipick in ipicks:
+                           picks.append(ipick)                     
                elif not t1 and not t2:
                   for ipick in ipicks:
                      picks.append(ipick)
                elif not t1 and t2:
-                  if partialy:
-                     if not top:
-                        if ipicks[1] in directionlist:
-                           picks.append(ipicks[3])
-                           picks.append(ipicks[2])
+                  if len(ipicks) == 4:
+                     if partialy:
+                        if not top:
+                           if ipicks[1] in directionlist:
+                              picks.append(ipicks[3])
+                              picks.append(ipicks[2])
+                           else:
+                              picks.append(ipicks[3])
+                              picks.append(ipicks[1])
                         else:
-                           picks.append(ipicks[3])
-                           picks.append(ipicks[1])
+                           if ipicks[1] in directionlist:
+                              picks.append(ipicks[0])
+                              picks.append(ipicks[1])
+                           else:
+                              picks.append(ipicks[0])
+                              picks.append(ipicks[2])
                      else:
-                        if ipicks[1] in directionlist:
-                           picks.append(ipicks[0])
+                        for ipick in ipicks:
+                           picks.append(ipick)
+                  else:
+                     if partialy:
+                        if not top:
                            picks.append(ipicks[1])
                         else:
                            picks.append(ipicks[0])
-                           picks.append(ipicks[2])
-                  else:
-                     for ipick in ipicks:
-                        picks.append(ipick)
+                     else:
+                        for ipick in ipicks:
+                           picks.append(ipick)
                elif t1 and t2:
                   if partialx and partialy:
                      if top and front:
