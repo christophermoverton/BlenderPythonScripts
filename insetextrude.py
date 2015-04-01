@@ -19,8 +19,8 @@ facetofaces = {}
 operatefaces = 2
 dimx = 3  ## can change >= 2
 dimy = 3 ## can change >= 2 
-TFACES = 0
-COLSIZE = None
+TFACES = 0   #do not modify
+COLSIZE = None  #do not modify
 ZCOUNT = 0  ## do not modify this
 ##get selected faces
 i = 0
