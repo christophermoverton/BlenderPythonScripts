@@ -42,7 +42,7 @@ for node in nodes:
     posx = nodes[node]['position'][0]
     copynranks = nodeyirank[0:len(nodeyirank)]
     del copynranks[yrank]
-    for cr in range(0,len(totalnodes)-1):
+    for cr in range(0,totalnodes-1):
         attr = {}
         nodeval = yrank*10+copynranks[cr]
         posy = nodes[copynranks[cr]]['position'][1]
@@ -54,6 +54,7 @@ for node in nodes:
         if crnodepos > 0:
             if nodeyirank[crnodepos-1] == yrank:
                 nodevald = yrank
+                nodes[yrank]['top'] = copynranks[cr]
             else:
                 nodevald = yrank*10 + nodeyirank[crnodepos-1]
         attr['down'] = nodevald
@@ -61,9 +62,42 @@ for node in nodes:
         if crnodepos < len(nodeyirank)-1:
             if nodeyirank[crnodepos+1] == yrank:
                 nodevald = yrank
+                nodes[yrank]['down'] = copynranks[cr]
             else:
                 nodevald = yrank*10 + nodeyirank[crnodepos+1]
         attr['top'] = nodevald
+        crossingnodes[nodeval] = attr
+        crossingnodesrev[attr['position']] = nodeval
+#2nd pass working on nodexirank indexing
+for node in nodes:
+   xrank = nodexirank.index(node)
+   posy = nodes[node]['position'][1]
+   copynranks = nodexirank[0:len(nodexirank)]
+   del copynranks[xrank]
+   for cr in range(0,totalnodes-1):
+      posx = nodes[copynranks[cr]]['position'][0]
+      nodeval = crossingnodesrev[(posx,posy)]
+      attr = crossingnodes[nodeval]
+      nodevald = None
+      crnodepos = nodexirank.index(copynranks[cr])
+      if crnodepos > 0:
+         if nodexirank[crnodepos-1] == xrank:
+             nodevald = xrank
+             nodes[xrank]['right'] = copynranks[cr]
+         else:
+             nposx = nodes[nodexirank[cr-1]]['position'][0]
+             nodevald = crossingnodesrev[(nposx,posy)]
+      attr['left'] = nodevald
+      nodevald = None
+      if crnodepos < len(nodexirank)-1:
+         if nodexirank[crnodepos+1] == yrank:
+             nodevald = xrank
+             nodes[xrank]['left'] = copynranks[cr]
+         else:
+             nposx = nodes[nodexirank[cr+1]]['position'][0]
+             nodevald = crossingnodesrev[(nposx,posy)]
+      attr['right'] = nodevald
+      crossingnodes[nodeval] = attr
 #construct faces and vertices from nodes
 for node in nodes:
     
