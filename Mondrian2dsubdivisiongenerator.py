@@ -118,7 +118,7 @@ xboundaries = [0,dimx]
 yboundaries = [0,dimy]
 boundarydict = {}
 boundarydictrev = {}
-i = 0
+i = -1
 checki = 0
 for xboundary in xboundaries:
    attr = {}
@@ -131,7 +131,7 @@ for xboundary in xboundaries:
    boundarydictrev[(xboundary,ypos)] = i
    boundarydict[i] = attr
    prevnode = i
-   if i == 0:
+   if i == -1:
       nprevnode = i
       for node in nodexirank:
          attr = {}
@@ -154,7 +154,7 @@ for xboundary in xboundaries:
          boundarydictrev[(xpos,0)] = i
          boundarydict[i] = attr
          nprevnode = i
-         i += 1         
+         i -= 1         
    for node in nodeyirank:
       attr = {}
       attr['left'] = None
@@ -186,7 +186,7 @@ for xboundary in xboundaries:
       boundarydictrev[(xboundary,ypos)] = i
       boundarydict[i] = attr
       prevnode = i
-      i += 1
+      i -= 1
    attr = {}
    attr['left'] = None
    attr['right'] = None
@@ -199,7 +199,7 @@ for xboundary in xboundaries:
    boundarydict[i] = attr
    if checki == 0:
       nprevnode = i
-      i += 1
+      i -= 1
       for node in nodexirank:
          attr = {}
          attr['left'] = None
@@ -221,7 +221,7 @@ for xboundary in xboundaries:
          boundarydictrev[(xpos,0)] = i
          boundarydict[i] = attr
          nprevnode = i
-         i += 1  
+         i -= 1  
    checki = i
 ## finished building boundary nodes
 
