@@ -112,6 +112,7 @@ for node in crossingnodes:
       crossingnodes[node]['crossing'] = 1
    else:
       crossingnodes[node]['crossing'] = 0
+      
 ##build boundary nodes
 xboundaries = [0,dimx]
 yboundaries = [0,dimy]
@@ -129,9 +130,31 @@ for xboundary in xboundaries:
    attr['position'] = (xboundary, ypos)
    boundarydictrev[(xboundary,ypos)] = i
    boundarydict[i] = attr
-   if i == checki:
-      prevnode = i
-   i += 1
+   prevnode = i
+   if i == 0:
+      nprevnode = i
+      for node in nodexirank:
+         attr = {}
+         attr['left'] = None
+         attr['right'] = None
+         attr['up'] = None
+         attr['down'] = None
+         xpos = nodes[node]['position'][0]
+         yminpos = nodes[nodeyirank[0]]['position'][1]
+         coord = (xpos,yminpos)
+         upnode = None
+         if coord in crossingnodesrev:
+            upnode = crossingnodesrev[coord]
+         if coord in nodepostoi:
+            upnode = nodepostoi[coord]
+         attr['up'] = upnode
+         attr['position'] = (xpos,0)
+         attr['left'] = nprevnode
+         boundarydict[nprevnode]['right'] = i
+         boundarydictrev[(xpos,0)] = i
+         boundarydict[i] = attr
+         nprevnode = i
+         i += 1         
    for node in nodeyirank:
       attr = {}
       attr['left'] = None
@@ -139,6 +162,24 @@ for xboundary in xboundaries:
       attr['up'] = None
       attr['down'] = None
       ypos = nodes[node]['position'][1]
+      if checki == 0:
+         xminpos = nodes[nodexirank[0]]['position'][0]
+         coord = (xminpos, ypos)
+         rightnode = None
+         if coord in crossingnodesrev:
+            rightnode = crossingnodesrev[coord]
+         if coord in nodepostoi:
+            rightnode = nodepostoi[coord]
+         attr['right'] = rightnode
+      else:
+         xmaxpos = nodes[nodexirank[len(nodeyirank)-1]]['position'][0]
+         coord = (xmaxpos, ypos)
+         leftnode = None
+         if coord in crossingnodesrev:
+            leftnode = crossingnodesrev[coord]
+         if coord in nodepostoi:
+            leftnode = nodepostoi[coord]
+         attr['left'] = rightnode         
       attr['position'] = (xboundary,ypos)
       attr['down'] = prevnode
       boundarydict[prevnode]['up'] = i
@@ -156,8 +197,34 @@ for xboundary in xboundaries:
    attr['down'] = prevnode
    boundarydictrev[(xboundary,ypos)] = i
    boundarydict[i] = attr
-   i += 1
+   if checki == 0:
+      nprevnode = i
+      i += 1
+      for node in nodexirank:
+         attr = {}
+         attr['left'] = None
+         attr['right'] = None
+         attr['up'] = None
+         attr['down'] = None
+         xpos = nodes[node]['position'][0]
+         ymaxpos = nodes[nodeyirank[len(nodeyirank)-1]]['position'][1]
+         coord = (xpos,ymaxpos)
+         downnode = None
+         if coord in crossingnodesrev:
+            downnode = crossingnodesrev[coord]
+         if coord in nodepostoi:
+            downnode = nodepostoi[coord]
+         attr['down'] = downnode
+         attr['position'] = (xpos,dimy)
+         attr['left'] = nprevnode
+         boundarydict[nprevnode]['right'] = i
+         boundarydictrev[(xpos,0)] = i
+         boundarydict[i] = attr
+         nprevnode = i
+         i += 1  
    checki = i
+## finished building boundary nodes
+
 ##recursive function to check crossing
 def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
    check = False
