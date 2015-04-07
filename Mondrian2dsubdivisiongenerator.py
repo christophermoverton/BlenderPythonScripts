@@ -224,7 +224,62 @@ for xboundary in xboundaries:
          i -= 1  
    checki = i
 ## finished building boundary nodes
-
+   
+## compile all nodes into a position lookup dictionary
+completerefrev = {}
+for pos in nodepostoi:
+   completerefrev[pos] = nodepostoi[pos]
+for pos in crossingnodesrev:
+   completerefrev[pos] = crossingnodesrev[pos]
+for pos in boundarydictrev:
+   completerefrev[pos] = boundarydictrev[pos]
+## finished compiling all nodes into a complete position lookup
+##compile all nodes in a lookup directory
+completeref = {}
+for node in nodes:
+   completeref[node] = nodes[node]
+for node in crossingnodes:
+   completeref[node] = crossingnodes[node]
+for node in boundarydict:
+   completeref[node] = boundarydict[node]
+##finished compiling all nodes
+   
+##pass to complete connections between boundary and non boundary nodes
+for node in boundarydict:
+   if completeref[node]['up'] != None:
+      neignode = completeref[node]['up']
+      if completeref[neignode]['down'] == None:
+         completeref[neignode]['down'] = node
+         if neighnode in crossingnodes:
+            crossingnodes[neighnode]['down'] = node
+         if neighnode in nodes:
+            nodes[neighnode]['down'] = node
+   if completeref[node]['down'] != None:
+      neignode = completeref[node]['down']
+      if completeref[neignode]['up'] == None:
+         completeref[neignode]['up'] = node
+         if neighnode in crossingnodes:
+            crossingnodes[neighnode]['up'] = node
+         if neighnode in nodes:
+            nodes[neighnode]['up'] = node
+   if completeref[node]['left'] != None:
+      neignode = completeref[node]['left']
+      if completeref[neignode]['right'] == None:
+         completeref[neignode]['right'] = node
+         if neighnode in crossingnodes:
+            crossingnodes[neighnode]['right'] = node
+         if neighnode in nodes:
+            nodes[neighnode]['right'] = node
+   if completeref[node]['right'] != None:
+      neignode = completeref[node]['right']
+      if completeref[neignode]['left'] == None:
+         completeref[neignode]['left'] = node
+         if neighnode in crossingnodes:
+            crossingnodes[neighnode]['left'] = node
+         if neighnode in nodes:
+            nodes[neighnode]['left'] = node
+## finished completion on boundary pass
+         
 ##recursive function to check crossing
 def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
    check = False
@@ -313,7 +368,18 @@ def checkneighbornode(crosslist, crossingnodes, direction):
                oppddict[nnode] = True
       crosslistdict[cnode] = oppdict
    return crosslistdict
-      
+
+         
+##function to check within face subdivision area
+def nodecolumncheck(minpos, maxpos, nodearank, crosslist, direction,
+                    completeref):
+   for node in crosslist:
+      pos = None
+      if node in completeref:
+         pos = completeref[node]['position']
+      else:
+         if direction:
+            
 ## construct vertices faces crossings
 facecnt = 0
 vertcnt = 0
@@ -338,8 +404,8 @@ for node in nodes:
    switches2 = [0,1]
    for switch1 in switches1:
       for switch2 in switches2:
-         check, nnode crosslist = checkcross(True, node,
-                                             crossingnodes, True)
+         check, nnode crosslist = checkcross(switch1, node,
+                                             crossingnodes, switch2)
    
          crosslistdict = checkneighbornode(crosslist, crossingnodes,
                                            direction)
