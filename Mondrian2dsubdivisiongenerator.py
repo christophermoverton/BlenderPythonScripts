@@ -303,7 +303,7 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
          if topnode in crossingnodes:
             ncrossval = crossingnodes[topnode]['crossing']
             if ncrossval:
-               return checkcross(ncrossval,topnode,crossingnodes,dirswitch,
+               return checkcross(crossval,topnode,crossingnodes,dirswitch,
                                  crosslist)
                
             else:
@@ -319,7 +319,7 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
          if downnode in crossingnodes:
             ncrossval = crossingnodes[downnode]['crossing']
             if ncrossval:
-               return checkcross(ncrossval,downnode,crossingnodes,dirswitch,
+               return checkcross(crossval,downnode,crossingnodes,dirswitch,
                                  crosslist)
             else:
                return (False, downnode, crosslist)
@@ -335,7 +335,7 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
          if rightnode in crossingnodes:
             ncrossval = crossingnodes[rightnode]['crossing']
             if not ncrossval:
-               return checkcross(ncrossval,rightnode,crossingnodes,dirswitch,
+               return checkcross(crossval,rightnode,crossingnodes,dirswitch,
                                  crosslist)
             else:
                return (False, rightnode, crosslist)
@@ -350,7 +350,7 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
          if leftnode in crossingnodes:
             ncrossval = crossingnodes[leftnode]['crossing']
             if not ncrossval:
-               return checkcross(ncrossval,leftnode,crossingnodes,dirswitch,
+               return checkcross(crossval,leftnode,crossingnodes,dirswitch,
                                  crosslist)
             else:
                return (False, leftnode, crosslist)
@@ -390,8 +390,7 @@ def nodecolumncheck(minpos, maxpos, nodearank, crosslist, direction,
       pos = None
       if node in completeref:
          pos = completeref[node]['position']
-      else:
-         if direction:
+
             
 ## construct vertices faces crossings
 facecnt = 0
@@ -417,9 +416,29 @@ for node in nodes:
    switches2 = [0,1]
    for switch1 in switches1:
       for switch2 in switches2:
+         crosslist = [node] 
          check, nnode crosslist = checkcross(switch1, node,
-                                             crossingnodes, switch2)
-   
+                                             completeref, switch2, crosslist)
+         if switch1 and switch2:
+            direction = 'up'
+            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+            minpos = completeref[0]['position'][1]
+         elif switch1 and not switch2:
+            direction = 'down'
+            minpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+            maxpos = completeref[0]['position'][1]
+         elif not switch1 and switch2:
+            direction = 'right'
+            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+            minpos = completeref[0]['position'][0]
+         else:
+            direction = 'left'
+            minpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+            maxpos = completeref[0]['position'][0]
+         crossendnode = crosslist[len(crosslist)-1]
+         if crossendnode == None:
+            del crosslist[len(crosslist)-1]
+         
          crosslistdict = checkneighbornode(crosslist, crossingnodes,
                                            direction)
    crossval = nodes[node]['up']
