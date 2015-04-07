@@ -28,6 +28,16 @@ nodexrank = nodeposlist[0:len(nodeposlist)]
 nodeyrank = nodeposlist[0:len(nodeposlist)]
 nodexrank.sort(key=lambda tup: tup[0])
 nodeyrank.sort(key=lambda tup: tup[1])
+#nodes keyed by ypos
+ypnodes = {}
+for node in nodes:
+   ypnodes[nodes[node]['position'][1]] = node
+
+#nodes keyed by xpos
+xpnodes = {}
+for node in nodes:
+   xpnodes[nodes[node]['position'][0]] = node
+#finished keying nodes by x and y pos
 nodexirank = []
 for pos in nodexrank:
     nodexirank.append(nodepostoi[pos])
@@ -363,34 +373,53 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
 ##to check crossing nodes list, if a node is found it marked
 ## marked at the crossing node in the given direction.
 ## this is used in identifying the vertices for face construction
-def checkneighbornode(crosslist, crossingnodes, direction):
-   if direction in ['up','down']:
-      oppdirections = ['left','right']
-   else:
-      oppdirections = ['up','down']
-   crosslistdict = {}
+def checkneighbornode(crosslist, crossingnodes, nodes, direction):
+   cdirection = None
+   if direction == 'up':
+      cdirection = 'right'
+   elif direction == 'left':
+      cdirection = 'down'
+   elif direction == 'down':
+      cdirection = 'right'
+   elif direction == 'right':
+      cdirection = 'up'
+   i = 0
    for cnode in crosslist:
-      oppddict = {}
-      for oppdirection in oppdirections:
-         oppdddict[oppdirection] = False
-      cnodedict = crossingnodes[cnode]
-      for oppdirection in oppdirections:
-         nnode = cnodedict[oppdirection]
-         if nnode not in crossingnodes:
-            if nnode != None:
-               oppddict[nnode] = True
-      crosslistdict[cnode] = oppdict
-   return crosslistdict
-
-         
+      neighnode = crossingnodes[cnode][cdirection]
+      if neighnode in nodes:
+         return neighnode,i
+      i += 1
+   return None, i
+      
 ##function to check within face subdivision area
-def nodecolumncheck(minpos, maxpos, nodearank, crosslist, direction,
+def nodecolumncheck(minpos, maxpos, pnodes, crosslist, direction,
                     completeref):
+   check = True
+   eqcheck = False
+   i = 0
    for node in crosslist:
-      pos = None
-      if node in completeref:
-         pos = completeref[node]['position']
-
+      pos = completeref[node]['position']
+      npos = None
+      if not direction:
+         ypos = pos[1]
+         nodepos = pnodes[ypos]
+         npos = nodes[nodepos]['position'][1]
+      else:
+         xpos = pos[0]
+         nodepos = pnodes[xpos]
+         npos = nodes[nodepos]['position'][0]
+      check1 = npos >= minpos
+      check2 = npos <= maxpos
+      check3 = npos == minpos
+      check4 = npos == maxpos
+      if check1 and check2:
+         check = False
+         if check3 or check4:
+            eqcheck = True
+      if not check:
+         break
+      i += 1
+   return check, eqcheck, i
             
 ## construct vertices faces crossings
 facecnt = 0
@@ -439,11 +468,60 @@ for node in nodes:
          if crossendnode == None:
             del crosslist[len(crosslist)-1]
          
-         crosslistdict = checkneighbornode(crosslist, crossingnodes,
-                                           direction)
-   crossval = nodes[node]['up']
+         ncheck, nodeindex = checkneighbornode(crosslist, completeref,
+                                               nodes, direction)
+         if ncheck != None:
+            crosslist = crosslist[0:nodeindex+1]
+         switch3 = None
+         switch4 = None
+         direction3 = None
+         if direction == 'up':
+            #right
+            switch3 = False
+            switch4 = True
+            direction3 = 0
+         elif direction == 'right':
+            #down
+            switch3 = True
+            swithc4 = False
+            direction3 = 1
+         elif direction == 'down':
+            #left
+            switch3 = False
+            switch4 = False
+            direction3 = 0
+         elif direction == 'left':
+            #up
+            switch3 = True
+            switch4 = True
+            direction3 = 1
+         pnodes = None
+         if direction3:
+            pnodes = xpnodes
+         else:
+            pnodes = ypnodes
+         cnode = crosslist[len(crosslist)-1]
+         crosslist2 = [cnode]
+         cncheck, cnnode crosslist2 = checkcross(switch3, cnode,
+                                                 completeref, switch4,
+                                                 crosslist2)
+         ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
+                                                      pnodes, crosslist2,
+                                                      direction3, completeref)
+         c2index = None
+         if not ncolchk:
+            if not eqcheck:
+               c2index = c2nindex
+            else:
+               c2index = c2nindex+1
+         else:
+            c2index = len(crosslist2)
+         crosslist2 = crosslist2[0:c2index]
+         # Two edges of faces determined.
+         # Build vertices 
    if crossval:
       
 #construct faces and vertices from nodes
 for node in nodes:
     
+#I get closer to finishing!  Whittling away this little program!
