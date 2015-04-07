@@ -126,6 +126,7 @@ for xboundary in xboundaries:
    attr['right'] = None
    attr['up'] = None
    attr['down'] = None
+   attr['crossing'] = None
    ypos = 0
    attr['position'] = (xboundary, ypos)
    boundarydictrev[(xboundary,ypos)] = i
@@ -139,6 +140,7 @@ for xboundary in xboundaries:
          attr['right'] = None
          attr['up'] = None
          attr['down'] = None
+         attr['crossing'] = None
          xpos = nodes[node]['position'][0]
          yminpos = nodes[nodeyirank[0]]['position'][1]
          coord = (xpos,yminpos)
@@ -161,6 +163,7 @@ for xboundary in xboundaries:
       attr['right'] = None
       attr['up'] = None
       attr['down'] = None
+      attr['crossing'] = None
       ypos = nodes[node]['position'][1]
       if checki == 0:
          xminpos = nodes[nodexirank[0]]['position'][0]
@@ -192,6 +195,7 @@ for xboundary in xboundaries:
    attr['right'] = None
    attr['up'] = None
    attr['down'] = None
+   attr['crossing'] = None
    ypos = dimy
    attr['position'] = (xboundary, ypos)
    attr['down'] = prevnode
@@ -206,6 +210,7 @@ for xboundary in xboundaries:
          attr['right'] = None
          attr['up'] = None
          attr['down'] = None
+         attr['crossing'] = None
          xpos = nodes[node]['position'][0]
          ymaxpos = nodes[nodeyirank[len(nodeyirank)-1]]['position'][1]
          coord = (xpos,ymaxpos)
@@ -250,6 +255,8 @@ for node in boundarydict:
       neignode = completeref[node]['up']
       if completeref[neignode]['down'] == None:
          completeref[neignode]['down'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
          if neighnode in crossingnodes:
             crossingnodes[neighnode]['down'] = node
          if neighnode in nodes:
@@ -258,6 +265,8 @@ for node in boundarydict:
       neignode = completeref[node]['down']
       if completeref[neignode]['up'] == None:
          completeref[neignode]['up'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
          if neighnode in crossingnodes:
             crossingnodes[neighnode]['up'] = node
          if neighnode in nodes:
@@ -266,6 +275,8 @@ for node in boundarydict:
       neignode = completeref[node]['left']
       if completeref[neignode]['right'] == None:
          completeref[neignode]['right'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
          if neighnode in crossingnodes:
             crossingnodes[neighnode]['right'] = node
          if neighnode in nodes:
@@ -274,6 +285,8 @@ for node in boundarydict:
       neignode = completeref[node]['right']
       if completeref[neignode]['left'] == None:
          completeref[neignode]['left'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
          if neighnode in crossingnodes:
             crossingnodes[neighnode]['left'] = node
          if neighnode in nodes:
