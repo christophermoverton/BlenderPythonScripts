@@ -317,11 +317,13 @@ for node in boundarydict:
 ## finished completion on boundary pass
          
 ##recursive function to check crossing
-def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
+def checkcross(crossval, node, crossingnodes, dirswitch, crosslist, nopasscrosslist):
    check = False
    if crossval:
       if dirswitch:
          topnode = crossingnodes[node]['top']
+         if topnode in nopasscrosslist:
+            return crosslist
          crosslist.append(topnode)
          if topnode in crossingnodes:
             ncrossval = crossingnodes[topnode]['crossing']
@@ -337,6 +339,8 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
 
       else:
          downnode = crossingnodes[node]['down']
+         if downnode in nopasscrosslist:
+            return crosslist
          crosslist.append(downnode)
          if downnode in crossingnodes:
             ncrossval = crossingnodes[downnode]['crossing']
@@ -352,6 +356,8 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
    else:
       if dirswitch:
          rightnode = crossingnodes[node]['right']
+         if rightnode in nopasscrosslist:
+            return crosslist
          crosslist.append(rightnode)
          if rightnode in crossingnodes:
             ncrossval = crossingnodes[rightnode]['crossing']
@@ -366,6 +372,8 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
 
       else:
          leftnode = crossingnodes[node]['left']
+         if leftnode in nopasscrosslist:
+            return crosslist
          crosslist.append(leftnode)
          if leftnode in crossingnodes:
             ncrossval = crossingnodes[leftnode]['crossing']
@@ -429,7 +437,24 @@ def nodecolumncheck(minpos, maxpos, pnodes, crosslist, direction,
          break
       i += 1
    return check, eqcheck, i
-            
+
+##function used 
+def buildnodesedge(axispos, crosslist, completeref, direction):
+   rcrosslist = []
+   for node in crosslist:
+      pos = (None,None)
+      posx = None
+      posy = None
+      if direction:
+         posx = completeref[node]['position'][0]
+         posy = axispos
+      else:
+         posy = completeref[node]['position'][1]
+         posx = axispos
+      pos = (posx, posy)
+      rcrosslist.append(pos)
+   return rcrosslist
+
 ## construct vertices faces crossings
 facecnt = 0
 vertcnt = 0
@@ -450,6 +475,7 @@ vertcnt = 0
 ##radial pattern.
 i = 0
 faces = []
+nopasscrosslist = []
 for node in nodes:
    #top crossval = 1, dirswitch = 1
    switches1 = [0,1]
@@ -459,6 +485,8 @@ for node in nodes:
          crosslist = [node] 
          crosslist = checkcross(switch1, node, completeref,
                                 switch2, crosslist)
+         if len(crosslist) == 1:
+            continue
          if switch1 and switch2:
             direction = 'up'
             maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
@@ -486,26 +514,31 @@ for node in nodes:
          switch3 = None
          switch4 = None
          direction3 = None
+         direction4 = None
          if direction == 'up':
             #right
             switch3 = False
             switch4 = True
             direction3 = 0
+            direction4 = 1
          elif direction == 'right':
             #down
             switch3 = True
             swithc4 = False
             direction3 = 1
+            direction4 = 0
          elif direction == 'down':
             #left
             switch3 = False
             switch4 = False
             direction3 = 0
+            direction4 = 1
          elif direction == 'left':
             #up
             switch3 = True
             switch4 = True
             direction3 = 1
+            direction4 = 0
          pnodes = None
          if direction3:
             pnodes = xpnodes
@@ -515,6 +548,8 @@ for node in nodes:
          crosslist2 = [cnode]
          crosslist2 = checkcross(switch3, cnode, completeref,
                                  switch4, crosslist2)
+         if len(crosslist2) == 1:
+            continue
          ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
                                                       pnodes, crosslist2,
                                                       direction3, completeref)
@@ -527,6 +562,21 @@ for node in nodes:
          else:
             c2index = len(crosslist2)
          crosslist2 = crosslist2[0:c2index]
+         cedgepos3 = None
+         cedgepos4 = None
+         if direction4:
+            cedgepos3 = completeref[crosslist2[len(crosslist2)-1]]['position'][0]
+            cedgepos4 = completeref[crosslist[0]['position'][1]
+         else:
+            cedgepos3 = completeref[crosslist2[len(crosslist2)-1]]['position'][1]
+            cedgepos4 = completeref[crosslist[0]['position'][0]
+         crosslist3 = buildnodesedge(cedgepos3, crosslist, completeref, direction4)
+         crosslist4 = buildnodesedge(cedgepos4, crosslist2, completeref, direction3)
+         allnodescrosslist = crosslist+crosslist2+crosslist3+crosslist4
+         for cnode in allnodescrosslist:
+            if not cnode in nopasscrosslist:
+               nopasscrosslist.append(cnode)
+               
          facegroup = []
          # Two edges of face determined.
          # Build vertices
