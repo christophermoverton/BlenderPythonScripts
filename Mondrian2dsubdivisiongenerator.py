@@ -20,6 +20,7 @@ for i in range(0,totalnodes):
    attr['right'] = None
    attr['up'] = None
    attr['down'] = None
+   attr['crossing'] = None
    nodes[i] = attr
    nodepostoi[(randposx,randposy)] = i
 nodeposlist = list(nodepostoi.keys())   
@@ -258,6 +259,18 @@ for node in crossingnodes:
 for node in boundarydict:
    completeref[node] = boundarydict[node]
 ##finished compiling all nodes
+
+##reindex nodes to vertex list and position to index vert index
+##a bit goofy doing this now, but saves work, and I don't feel like
+##re writing the above.
+vertices = []
+vertpostoindex = {}
+i = 0
+for nodepos in completerefrev:
+   vertices.append(nodepos)
+   verpostoindex[nodepos] = i
+   i += 1
+##finished reindexing vertices
    
 ##pass to complete connections between boundary and non boundary nodes
 for node in boundarydict:
@@ -310,65 +323,52 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
       if dirswitch:
          topnode = crossingnodes[node]['top']
          crosslist.append(topnode)
-         if topnode in crossingnodes:
-            ncrossval = crossingnodes[topnode]['crossing']
-            if ncrossval:
-               return checkcross(crossval,topnode,crossingnodes,dirswitch,
-                                 crosslist)
-               
-            else:
-               return (False, topnode, crosslist)
+
+         ncrossval = crossingnodes[topnode]['crossing']
+         crossingnone = ncrossval == None  ##node setting
+         if ncrossval and not crossingnone:
+            return checkcross(crossval,topnode,crossingnodes,dirswitch,
+                              crosslist)
+            
          else:
-            if topnode == None:
-               return (False, None, crosslist)
-            else:
-               return (True, topnode, crosslist)
+            return (False, topnode, crosslist)
+
       else:
          downnode = crossingnodes[node]['down']
          crosslist.append(downnode)
-         if downnode in crossingnodes:
-            ncrossval = crossingnodes[downnode]['crossing']
-            if ncrossval:
-               return checkcross(crossval,downnode,crossingnodes,dirswitch,
-                                 crosslist)
-            else:
-               return (False, downnode, crosslist)
+
+         ncrossval = crossingnodes[downnode]['crossing']
+         crossingnone = ncrossval == None  ##node setting
+         if ncrossval and not crossingnone:
+            return checkcross(crossval,downnode,crossingnodes,dirswitch,
+                              crosslist)
          else:
-            if downnode == None:
-               return (False, None, crosslist)
-            else:
-               return (True, downnode, crosslist)
+            return (False, downnode, crosslist)
+
    else:
       if dirswitch:
          rightnode = crossingnodes[node]['right']
          crosslist.append(rightnode)
-         if rightnode in crossingnodes:
-            ncrossval = crossingnodes[rightnode]['crossing']
-            if not ncrossval:
-               return checkcross(crossval,rightnode,crossingnodes,dirswitch,
-                                 crosslist)
-            else:
-               return (False, rightnode, crosslist)
+
+         ncrossval = crossingnodes[rightnode]['crossing']
+         crossingnone = ncrossval == None  ##node setting
+         if not ncrossval and not crossingnone:
+            return checkcross(crossval,rightnode,crossingnodes,dirswitch,
+                              crosslist)
          else:
-            if rightnode == None:
-               return (False, None, crosslist)
-            else:
-               return (True, rightnode, crosslist)
+            return (False, rightnode, crosslist)
+
       else:
          leftnode = crossingnodes[node]['left']
          crosslist.append(leftnode)
-         if leftnode in crossingnodes:
-            ncrossval = crossingnodes[leftnode]['crossing']
-            if not ncrossval:
-               return checkcross(crossval,leftnode,crossingnodes,dirswitch,
-                                 crosslist)
-            else:
-               return (False, leftnode, crosslist)
+         ncrossval = crossingnodes[leftnode]['crossing']
+         crossingnone = ncrossval == None  ##node setting
+         if not ncrossval and not crossingnone:
+            return checkcross(crossval,leftnode,crossingnodes,dirswitch,
+                              crosslist)
          else:
-            if leftnode == None:
-               return (False, None, crosslist)
-            else:
-               return (True, leftnode, crosslist)
+            return (False, leftnode, crosslist)
+
 
 ##to check crossing nodes list, if a node is found it marked
 ## marked at the crossing node in the given direction.
@@ -438,7 +438,9 @@ vertcnt = 0
 ##in the direction of the nearest boundary, as long as such
 ##boundary is on a neighboring.
 ##All edges starting from a node have 4 direction
-##radial pattern.  
+##radial pattern.
+i = 0
+faces = []
 for node in nodes:
    #top crossval = 1, dirswitch = 1
    switches1 = [0,1]
@@ -517,8 +519,10 @@ for node in nodes:
          else:
             c2index = len(crosslist2)
          crosslist2 = crosslist2[0:c2index]
-         # Two edges of faces determined.
-         # Build vertices 
+         facegroup = []
+         # Two edges of face determined.
+         # Build vertices
+         
    if crossval:
       
 #construct faces and vertices from nodes
