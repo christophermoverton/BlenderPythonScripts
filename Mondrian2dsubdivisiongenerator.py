@@ -302,6 +302,7 @@ while not stopcheck:
             nextpos = completeref[currentnode]['down']
          elif j = 3:
             nextpos = completeref[currentnode]['left']
+            nextpos = completeref[nextpos]['up']
          if j != 3:
             polypos.append(currentposition)
          
@@ -543,6 +544,7 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
                nextpos = completeref[currentnode]['down']
             elif j = 3:
                nextpos = completeref[currentnode]['left']
+               nextpos = completeref[nextpos]['up']
             if j != 3:
                polypos.append(currentposition)
             currentnode = nextpos
