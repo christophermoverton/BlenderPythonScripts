@@ -506,6 +506,9 @@ def updatecrossings(completeref, rcrossinglist, pcrossinglist):
          completeref[node]['crossing'] = crossingval
          i += 1
    return completeref
+
+##function to build simple polys for intersection testing on a given
+##aggregate face
 def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
                          completeref):
    stopcheck = False
