@@ -271,6 +271,47 @@ for nodepos in completerefrev:
    verpostoindex[nodepos] = i
    i += 1
 ##finished reindexing vertices
+
+##indexing simple polygons over the completeref set
+stopcheck = False
+startposition = (0,0)
+currentnode = completerefrev[startposition]
+currentposition = startposition
+nextrowval = completeref[startnode]['right']
+polynodesrev = {}
+polynodes = {}
+i = 0
+while not stopcheck:
+   columnstopcheck = False
+   while not columnstepcheck:
+      polypos = [completeref[currentnode]['position']]
+      for j in range(0,3):
+         currentposition = completeref[currentnode]['position']
+         if j = 0:
+            nextpos = completeref[currentnode]['up']
+            if nextpos == None:
+               columnstepcheck = True
+               break
+         elif j = 1:
+            nextpos = completeref[currentnode]['right']
+            if nextpos == None:
+               columnstepcheck = True
+               stopcheck = True
+               break
+         elif j = 2:
+            nextpos = completeref[currentnode]['down']
+         elif j = 3:
+            nextpos = completeref[currentnode]['left']
+         if j != 3:
+            polypos.append(currentposition)
+         
+         currentnode = nextpos
+      polynodesrev[polypos] = i
+      polynodes[i] = polypos
+      i += 1
+   currentnode = nextrowval
+   nextrowval = completeref[currentnode]['right']
+##finished indexing simple polygons
    
 ##pass to complete connections between boundary and non boundary nodes
 for node in boundarydict:
@@ -317,13 +358,13 @@ for node in boundarydict:
 ## finished completion on boundary pass
          
 ##recursive function to check crossing
-def checkcross(crossval, node, crossingnodes, dirswitch, crosslist, nopasscrosslist):
+def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
    check = False
    if crossval:
       if dirswitch:
          topnode = crossingnodes[node]['top']
-         if topnode in nopasscrosslist:
-            return crosslist
+##         if topnode in nopasscrosslist:
+##            return crosslist
          crosslist.append(topnode)
          if topnode in crossingnodes:
             ncrossval = crossingnodes[topnode]['crossing']
@@ -339,8 +380,8 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist, nopasscrossl
 
       else:
          downnode = crossingnodes[node]['down']
-         if downnode in nopasscrosslist:
-            return crosslist
+##         if downnode in nopasscrosslist:
+##            return crosslist
          crosslist.append(downnode)
          if downnode in crossingnodes:
             ncrossval = crossingnodes[downnode]['crossing']
@@ -356,8 +397,8 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist, nopasscrossl
    else:
       if dirswitch:
          rightnode = crossingnodes[node]['right']
-         if rightnode in nopasscrosslist:
-            return crosslist
+##         if rightnode in nopasscrosslist:
+##            return crosslist
          crosslist.append(rightnode)
          if rightnode in crossingnodes:
             ncrossval = crossingnodes[rightnode]['crossing']
@@ -372,8 +413,8 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist, nopasscrossl
 
       else:
          leftnode = crossingnodes[node]['left']
-         if leftnode in nopasscrosslist:
-            return crosslist
+##         if leftnode in nopasscrosslist:
+##            return crosslist
          crosslist.append(leftnode)
          if leftnode in crossingnodes:
             ncrossval = crossingnodes[leftnode]['crossing']
@@ -455,6 +496,60 @@ def buildnodesedge(axispos, crosslist, completeref, direction):
       rcrosslist.append(pos)
    return rcrosslist
 
+def updatecrossings(completeref, rcrossinglist, pcrossinglist):
+   if len(rcrossinglist) >= 3:
+      i = 0
+      for node in pcrossinglist:
+         if (i == 0) or (i == len(pcrossinglist)-1):
+         rnode = rcrossinglist[i]
+         crossingval = completeref[rnode]['crossing']
+         completeref[node]['crossing'] = crossingval
+         i += 1
+   return completeref
+def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
+                         completeref):
+   stopcheck = False
+   startposition = minpos
+   maxposx = maxpos[0]
+   maxposy = maxpos[1]
+   currentnode = completerefrev[startposition]
+   currentposition = startposition
+   nextrowval = completeref[startnode]['right']
+   polynodeslist = []
+
+   while not stopcheck:
+      columnstopcheck = False
+      while not columnstepcheck:
+         polypos = [completeref[currentnode]['position']]
+         for j in range(0,3):
+            currentposition = completeref[currentnode]['position']
+            if j = 0:
+               nextpos = completeref[currentnode]['up']
+               nextposy = completeref[nextpos]['position'][1]
+               if nextposy > maxposy:
+                  columnstepcheck = True
+                  break
+            elif j = 1:
+               nextpos = completeref[currentnode]['right']
+               nextposx = completeref[nextpos]['position'][0]
+               if nextposx > maxposx:
+                  columnstepcheck = True
+                  stopcheck = True
+                  break
+            elif j = 2:
+               nextpos = completeref[currentnode]['down']
+            elif j = 3:
+               nextpos = completeref[currentnode]['left']
+            if j != 3:
+               polypos.append(currentposition)
+            currentnode = nextpos
+         polynodeslist.append(polypos) 
+         
+      currentnode = nextrowval
+      nextrowval = completeref[currentnode]['right']
+   return polynodeslist
+## end function simple polynode build
+      
 ## construct vertices faces crossings
 facecnt = 0
 vertcnt = 0
