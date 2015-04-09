@@ -696,6 +696,8 @@ for node in nodes:
             minpos = completeref[crosslist[len(crosslist)-1]]['position']
          spolys = buildfacesimplepolys(minpos, maxpos, polynodesrev,
                                        completerefrev, completeref)
+         ##perform simple poly intersection testing, eliminating
+         ##subdivision overlap
          ccontinue = False
          for poly in spolys:
             if poly in nopasscrosslist:
