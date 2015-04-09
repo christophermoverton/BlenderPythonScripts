@@ -501,11 +501,11 @@ def updatecrossings(completeref, rcrossinglist, pcrossinglist):
    if len(rcrossinglist) >= 3:
       i = 0
       for node in pcrossinglist:
-         if (i == 0) or (i == len(pcrossinglist)-1):
-         rnode = rcrossinglist[i]
-         crossingval = completeref[rnode]['crossing']
-         completeref[node]['crossing'] = crossingval
-         i += 1
+         if (i != 0) and (i != len(pcrossinglist)-1):
+            rnode = rcrossinglist[i]
+            crossingval = completeref[rnode]['crossing']
+            completeref[node]['crossing'] = crossingval
+            i += 1
    return completeref
 
 ##function to build simple polys for intersection testing on a given
@@ -585,8 +585,7 @@ for node in nodes:
          crosslist = [node] 
          crosslist = checkcross(switch1, node, completeref,
                                 switch2, crosslist)
-         if len(crosslist) == 1:
-            continue
+
          if switch1 and switch2:
             direction = 'up'
             maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
@@ -606,7 +605,9 @@ for node in nodes:
          crossendnode = crosslist[len(crosslist)-1]
          if crossendnode == None:
             del crosslist[len(crosslist)-1]
-         
+   
+         if len(crosslist) == 1:
+            continue         
          ncheck, nodeindex = checkneighbornode(crosslist, completeref,
                                                nodes, direction)
          if ncheck != None:
@@ -648,6 +649,10 @@ for node in nodes:
          crosslist2 = [cnode]
          crosslist2 = checkcross(switch3, cnode, completeref,
                                  switch4, crosslist2)
+         crossendnode = crosslist2[len(crosslist2)-1]
+         if crossendnode == None:
+            del crosslist2[len(crosslist2)-1]
+   
          if len(crosslist2) == 1:
             continue
          ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
@@ -673,13 +678,48 @@ for node in nodes:
          crosslist3 = buildnodesedge(cedgepos3, crosslist, completeref, direction4)
          crosslist4 = buildnodesedge(cedgepos4, crosslist2, completeref, direction3)
          allnodescrosslist = crosslist+crosslist2+crosslist3+crosslist4
-         for cnode in allnodescrosslist:
-            if not cnode in nopasscrosslist:
-               nopasscrosslist.append(cnode)
-               
-         facegroup = []
+         completeref = updatecrossings(completeref, crosslist, crosslist3)
+         completeref = updatecrossings(completeref, crosslis2, crosslist4)
+         if direction == 'up':
+            maxpos = completeref[crosslist2[0]]['position']
+            minpos = completeref[crosslist[0]]['position']
+         elif direction == 'down':
+            minpos = completeref[crosslist2[len(crosslist2)-1]]['position']
+            maxpos = completeref[crosslist[0]]['position']
+         elif direction == 'right':
+            maxpos = completeref[crosslist[len(crosslist)-1]]['position']
+            minpos = (completeref[crosslist[0]]['position'][0],
+                      completeref[crosslist2[len(crosslist2)-1]]['position'][1])
+         elif direction == 'left':
+            maxpos = (completeref[crosslist[0]]['position'][0],
+                      completeref[crosslist2[len(crosslist2)-1]]['position'][1]
+            minpos = completeref[crosslist[len(crosslist)-1]]['position']
+         spolys = buildfacesimplepolys(minpos, maxpos, polynodesrev,
+                                       completerefrev, completeref)
+         ccontinue = False
+         for poly in spolys:
+            if poly in nopasscrosslist:
+               ccontinue = True
+               break
+         if ccontinue:
+            continue
+         for poly in spolys:
+            nopasscrosslist.apppend(poly)
+##         for cnode in allnodescrosslist:
+##            if not cnode in nopasscrosslist:
+##               nopasscrosslist.append(cnode)
          # Two edges of face determined.
          # Build vertices
+         vpos1 = completeref[crosslist[0]]['position']
+         vpos2 = completeref[crosslist2[0]]['position']
+         vpos3 = completeref[crosslist2[len(crosslist2)-1]]['position']
+         vpos4 = completeref[crosslist3[0]]['position']
+         vi1 = vertpostoindex[vpos1]
+         vi2 = vertpostoindex[vpos2]
+         vi3 = vertpostoindex[vpos3]
+         vi4 = vertpostoindex[vpos4]
+         facegroup = [vi1,vi2,vi3,vi4]
+
          
    if crossval:
       
