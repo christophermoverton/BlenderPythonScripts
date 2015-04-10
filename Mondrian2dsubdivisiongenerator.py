@@ -287,20 +287,20 @@ while not stopcheck:
       polypos = [completeref[currentnode]['position']]
       for j in range(0,3):
          currentposition = completeref[currentnode]['position']
-         if j = 0:
+         if j == 0:
             nextpos = completeref[currentnode]['up']
             if nextpos == None:
                columnstepcheck = True
                break
-         elif j = 1:
+         elif j == 1:
             nextpos = completeref[currentnode]['right']
             if nextpos == None:
                columnstepcheck = True
                stopcheck = True
                break
-         elif j = 2:
+         elif j == 2:
             nextpos = completeref[currentnode]['down']
-         elif j = 3:
+         elif j == 3:
             nextpos = completeref[currentnode]['left']
             nextpos = completeref[nextpos]['up']
          if j != 3:
@@ -528,22 +528,22 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
          polypos = [completeref[currentnode]['position']]
          for j in range(0,3):
             currentposition = completeref[currentnode]['position']
-            if j = 0:
+            if j == 0:
                nextpos = completeref[currentnode]['up']
                nextposy = completeref[nextpos]['position'][1]
                if nextposy > maxposy:
                   columnstepcheck = True
                   break
-            elif j = 1:
+            elif j == 1:
                nextpos = completeref[currentnode]['right']
                nextposx = completeref[nextpos]['position'][0]
                if nextposx > maxposx:
                   columnstepcheck = True
                   stopcheck = True
                   break
-            elif j = 2:
+            elif j == 2:
                nextpos = completeref[currentnode]['down']
-            elif j = 3:
+            elif j == 3:
                nextpos = completeref[currentnode]['left']
                nextpos = completeref[nextpos]['up']
             if j != 3:
@@ -736,10 +736,10 @@ for node in nodes:
          cedgepos4 = None
          if direction4:
             cedgepos3 = completeref[crosslist2[len(crosslist2)-1]]['position'][0]
-            cedgepos4 = completeref[crosslist[0]['position'][1]
+            cedgepos4 = completeref[crosslist[0]]['position'][1]
          else:
             cedgepos3 = completeref[crosslist2[len(crosslist2)-1]]['position'][1]
-            cedgepos4 = completeref[crosslist[0]['position'][0]
+            cedgepos4 = completeref[crosslist[0]]['position'][0]
          crosslist3 = buildnodesedge(cedgepos3, crosslist, completeref, direction4)
          crosslist4 = buildnodesedge(cedgepos4, crosslist2, completeref, direction3)
          allnodescrosslist = crosslist+crosslist2+crosslist3+crosslist4
@@ -757,7 +757,7 @@ for node in nodes:
                       completeref[crosslist2[len(crosslist2)-1]]['position'][1])
          elif direction == 'left':
             maxpos = (completeref[crosslist[0]]['position'][0],
-                      completeref[crosslist2[len(crosslist2)-1]]['position'][1]
+                      completeref[crosslist2[len(crosslist2)-1]]['position'][1])
             minpos = completeref[crosslist[len(crosslist)-1]]['position']
          spolys,spostopolys = buildfacesimplepolys(minpos, maxpos,
                                                    polynodesrev,
@@ -800,9 +800,6 @@ for node in nodes:
          vi4 = vertpostoindex[vpos4]
          facegroup = [vi1,vi2,vi3,vi4]
          faces.append(facegroup)
-
       
-#construct faces and vertices from nodes
-for node in nodes:
     
 #I get closer to finishing!  Whittling away this little program!
