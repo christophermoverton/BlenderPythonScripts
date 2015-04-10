@@ -520,6 +520,7 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
    currentposition = startposition
    nextrowval = completeref[startnode]['right']
    polynodeslist = []
+   postopolynodes = {}
 
    while not stopcheck:
       columnstopcheck = False
@@ -547,14 +548,78 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
                nextpos = completeref[nextpos]['up']
             if j != 3:
                polypos.append(currentposition)
+                  
             currentnode = nextpos
-         polynodeslist.append(polypos) 
+         polynodeslist.append(polypos)
+         for pos in polypos:
+            if pos in postopolynodes:
+               postopolynodes[pos].append(polypos)
+            else:
+               postopolynodes[pos] = [polypos]
          
       currentnode = nextrowval
       nextrowval = completeref[currentnode]['right']
-   return polynodeslist
+   return polynodeslist, postopolynodes
 ## end function simple polynode build
-      
+
+##function to reaggregate simple polys returns 4 nodes coordinates
+def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
+                           completeref, completerefrev):
+   rnode = completerefrev[rnodepos]
+   directions = ['up','down','left','right']
+   orthogdirections = []
+   rnodeposneighbors = []
+   nnodepositiontoindex = {}
+   i = 0
+   ##assumed that the position indexing for a neighbor node
+   ## is always mirror symmetric relative to the previous iteration
+   ## for a given direction
+   for direction in directions:
+      nnode = completeref[rnode][direction]
+      nnodepos = completeref[nnode]['position']
+      if nnodepos in rnodepoly:
+         orthogdirections.append(direction)
+         rnodeposneighbors.append(nnodepos)
+         nnodepositiontoindex[nnodepos] = i
+      i += 1
+   crosslists = []
+   for nnodepos in rnodeposneighbors:
+      nextindex = nnodepositiontoindex[nnodepos]
+
+      inpasslist = True
+      neighbornodepos = nnodepos
+      processedpolys = [rnodepoly]
+      procpositions = [rnodepos]
+      while inpasslist:
+         polyslist = spostopolys[neighbornodepos]
+         for poly in polyslist:
+            t1 = poly in processedpolys
+            t2 = poly in passlist
+            if (not t1) and t2:
+               processedpolys.append(poly)
+               neighbornodepos = poly[nextindex]
+               procpositions.append(neighbornodepos)
+            elif not t1 and not t2:
+               inpasslist = False
+      crosslists.append(procpositions)
+   list1 = crosslists[0]
+   xdist = abs(list1[0][0] -list1[len(list1)-1][0])
+   zerox = False
+   if xdist == 0:
+      zerox = True
+   crosslist1 = crosslists[0]
+   crosslist2 = crosslists[1]
+   node2pos = None
+   if zerox:
+      node2pos = (crosslist2[len(crosslist2)-1],
+                  crosslist1[len(crosslist1)-1])
+   else:
+      node2pos = (crosslist1[len(crosslist1)-1],
+                  crosslist2[len(crosslist2)-1])
+   return (crosslist1[0],crosslist1[len(crosslist1)-1],
+           node2pos, crosslist2[len(crosslist2)-1])
+                  
+   
 ## construct vertices faces crossings
 facecnt = 0
 vertcnt = 0
@@ -694,36 +759,48 @@ for node in nodes:
             maxpos = (completeref[crosslist[0]]['position'][0],
                       completeref[crosslist2[len(crosslist2)-1]]['position'][1]
             minpos = completeref[crosslist[len(crosslist)-1]]['position']
-         spolys = buildfacesimplepolys(minpos, maxpos, polynodesrev,
-                                       completerefrev, completeref)
+         spolys,spostopolys = buildfacesimplepolys(minpos, maxpos,
+                                                   polynodesrev,
+                                                   completerefrev, completeref)
          ##perform simple poly intersection testing, eliminating
          ##subdivision overlap
+         ydiff = maxpos[1] - minpos[1]
+         xdiff = maxpos[0] - minpos[0]
          ccontinue = False
+         passlist = []
+         rootpoly = spostopolys[completeref[node]['position']]
          for poly in spolys:
             if poly in nopasscrosslist:
-               ccontinue = True
-               break
+               if poly == rootpoly:
+                  ccontinue = True
+                  break
+            else:
+               passlist.append(poly)
          if ccontinue:
             continue
+         vposlist = rebuildfacesimplepolys(rnodepos, rnodepoly,
+                                           passlist, spostopolys,
+                                           completeref, completerefrev)
          for poly in spolys:
-            nopasscrosslist.apppend(poly)
+            if not poly in nopasscrosslist:
+               nopasscrosslist.apppend(poly)
 ##         for cnode in allnodescrosslist:
 ##            if not cnode in nopasscrosslist:
 ##               nopasscrosslist.append(cnode)
          # Two edges of face determined.
          # Build vertices
-         vpos1 = completeref[crosslist[0]]['position']
-         vpos2 = completeref[crosslist2[0]]['position']
-         vpos3 = completeref[crosslist2[len(crosslist2)-1]]['position']
-         vpos4 = completeref[crosslist3[0]]['position']
+##         vpos1 = completeref[crosslist[0]]['position']
+##         vpos2 = completeref[crosslist2[0]]['position']
+##         vpos3 = completeref[crosslist2[len(crosslist2)-1]]['position']
+##         vpos4 = completeref[crosslist3[0]]['position']
+         vpos1,vpos2,vpos3,vpos4 = vposlist
          vi1 = vertpostoindex[vpos1]
          vi2 = vertpostoindex[vpos2]
          vi3 = vertpostoindex[vpos3]
          vi4 = vertpostoindex[vpos4]
          facegroup = [vi1,vi2,vi3,vi4]
+         faces.append(facegroup)
 
-         
-   if crossval:
       
 #construct faces and vertices from nodes
 for node in nodes:
