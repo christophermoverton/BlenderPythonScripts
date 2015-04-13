@@ -1,13 +1,13 @@
 #Mondrian like subdivision generator
-import bpy
+##import bpy
 import random
 dimx = 50
 dimy = 65
 totalnodes = 3
 meshName = "Mondrian"
 obName = "MondrianObj"
-me = bpy.data.meshes.new(meshName)
-ob = bpy.data.objects.new(obName, me)
+##me = bpy.data.meshes.new(meshName)
+##ob = bpy.data.objects.new(obName, me)
 ##track edges on mondrian generator and vertices
 nodes = {}
 nodepostoi = {}
@@ -21,8 +21,8 @@ for i in range(0,totalnodes):
    attr['up'] = None
    attr['down'] = None
    attr['crossing'] = None
-   nodes[i] = attr
-   nodepostoi[(randposx,randposy)] = i
+   nodes[i+1] = attr
+   nodepostoi[(randposx,randposy)] = i+1
 nodeposlist = list(nodepostoi.keys())   
 #node ordering
 nodexrank = nodeposlist[0:len(nodeposlist)]
@@ -59,9 +59,12 @@ for node in nodes:
     posx = nodes[node]['position'][0]
     copynranks = nodeyirank[0:len(nodeyirank)]
     del copynranks[yrank]
+    yrank += 1
     for cr in range(0,totalnodes-1):
         attr = {}
         nodeval = yrank*factor+copynranks[cr]
+        print(yrank)
+        print("nodeval: ", nodeval)
         posy = nodes[copynranks[cr]]['position'][1]
         attr['position'] = (posx,posy) 
         attr['left'] = None
@@ -69,20 +72,20 @@ for node in nodes:
         nodevald = None
         crnodepos = nodeyirank.index(copynranks[cr])
         if crnodepos > 0:
-            if nodeyirank[crnodepos-1] == yrank:
-                nodevald = yrank
-                nodes[yrank]['top'] = copynranks[cr]
+            if nodeyirank[crnodepos-1] == nodeyirank[yrank-1]:
+                nodevald = nodeyirank[yrank-1]
+                nodes[node]['up'] = copynranks[cr]
             else:
                 nodevald = yrank*factor + nodeyirank[crnodepos-1]
         attr['down'] = nodevald
         nodevald = None
         if crnodepos < len(nodeyirank)-1:
-            if nodeyirank[crnodepos+1] == yrank:
-                nodevald = yrank
-                nodes[yrank]['down'] = copynranks[cr]
+            if nodeyirank[crnodepos+1] == nodeyirank[yrank-1]:
+                nodevald = nodeyirank[yrank-1]
+                nodes[node]['down'] = copynranks[cr]
             else:
                 nodevald = yrank*factor + nodeyirank[crnodepos+1]
-        attr['top'] = nodevald
+        attr['up'] = nodevald
         crossingnodes[nodeval] = attr
         crossingnodesrev[attr['position']] = nodeval
 #2nd pass working on nodexirank indexing
@@ -98,20 +101,21 @@ for node in nodes:
       nodevald = None
       crnodepos = nodexirank.index(copynranks[cr])
       if crnodepos > 0:
-         if nodexirank[crnodepos-1] == xrank:
-             nodevald = xrank
-             nodes[xrank]['right'] = copynranks[cr]
+         if nodexirank[crnodepos-1] == nodexirank[xrank]:
+             nodevald = nodexirank[xrank]
+             nodes[node]['right'] = copynranks[cr]
          else:
-             nposx = nodes[nodexirank[cr-1]]['position'][0]
+             nposx = nodes[nodexirank[crnodepos-1]]['position'][0]
              nodevald = crossingnodesrev[(nposx,posy)]
       attr['left'] = nodevald
       nodevald = None
       if crnodepos < len(nodexirank)-1:
-         if nodexirank[crnodepos+1] == yrank:
-             nodevald = xrank
-             nodes[xrank]['left'] = copynranks[cr]
+         if nodexirank[crnodepos+1] == nodexirank[xrank]:
+             nodevald = nodexirank[xrank]
+             nodes[node]['left'] = copynranks[cr]
          else:
-             nposx = nodes[nodexirank[cr+1]]['position'][0]
+             nposx = nodes[nodexirank[crnodepos+1]]['position'][0]
+             ##print(crossingnodesrev)
              nodevald = crossingnodesrev[(nposx,posy)]
       attr['right'] = nodevald
       crossingnodes[nodeval] = attr
