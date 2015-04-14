@@ -145,6 +145,13 @@ for xboundary in xboundaries:
    attr['crossing'] = None
    ypos = 0
    attr['position'] = (xboundary, ypos)
+   if xboundary != 0:
+      xpos = nodes[nodexirank[len(nodexirank)-1]]['position'][0]
+      print('xpos: ',xpos)
+      bnnode = boundarydictrev[(xpos,ypos)]
+      print('bnnode', bnnode)
+      attr['left'] = bnnode
+      boundarydict[bnnode]['right'] = i
    boundarydictrev[(xboundary,ypos)] = i
    boundarydict[i] = attr
    prevnode = i
@@ -192,14 +199,14 @@ for xboundary in xboundaries:
             rightnode = nodepostoi[coord]
          attr['right'] = rightnode
       else:
-         xmaxpos = nodes[nodexirank[len(nodeyirank)-1]]['position'][0]
+         xmaxpos = nodes[nodexirank[len(nodexirank)-1]]['position'][0]
          coord = (xmaxpos, ypos)
          leftnode = None
          if coord in crossingnodesrev:
             leftnode = crossingnodesrev[coord]
          if coord in nodepostoi:
             leftnode = nodepostoi[coord]
-         attr['left'] = rightnode         
+         attr['left'] = leftnode         
       attr['position'] = (xboundary,ypos)
       attr['down'] = prevnode
       boundarydict[prevnode]['up'] = i
@@ -240,7 +247,7 @@ for xboundary in xboundaries:
          attr['position'] = (xpos,dimy)
          attr['left'] = nprevnode
          boundarydict[nprevnode]['right'] = i
-         boundarydictrev[(xpos,0)] = i
+         boundarydictrev[(xpos,dimy)] = i
          boundarydict[i] = attr
          nprevnode = i
          i -= 1  
