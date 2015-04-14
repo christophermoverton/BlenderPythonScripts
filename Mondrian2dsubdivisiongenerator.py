@@ -276,6 +276,50 @@ for nodepos in completerefrev:
    vertpostoindex[nodepos] = i
    i += 1
 ##finished reindexing vertices
+   
+##pass to complete connections between boundary and non boundary nodes
+for node in boundarydict:
+   if completeref[node]['up'] != None:
+      neignode = completeref[node]['up']
+      if completeref[neignode]['down'] == None:
+         completeref[neignode]['down'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
+         if neignode in crossingnodes:
+            crossingnodes[neignode]['down'] = node
+         if neignode in nodes:
+            nodes[neignode]['down'] = node
+   if completeref[node]['down'] != None:
+      neignode = completeref[node]['down']
+      if completeref[neignode]['up'] == None:
+         completeref[neignode]['up'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
+         if neignode in crossingnodes:
+            crossingnodes[neignode]['up'] = node
+         if neignode in nodes:
+            nodes[neignode]['up'] = node
+   if completeref[node]['left'] != None:
+      neignode = completeref[node]['left']
+      if completeref[neignode]['right'] == None:
+         completeref[neignode]['right'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
+         if neignode in crossingnodes:
+            crossingnodes[neignode]['right'] = node
+         if neignode in nodes:
+            nodes[neignode]['right'] = node
+   if completeref[node]['right'] != None:
+      neignode = completeref[node]['right']
+      if completeref[neignode]['left'] == None:
+         completeref[neignode]['left'] = node
+         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
+         completeref[node]['crossing'] = completeref[neignode]['crossing']
+         if neignode in crossingnodes:
+            crossingnodes[neignode]['left'] = node
+         if neignode in nodes:
+            nodes[neignode]['left'] = node
+## finished completion on boundary pass
 
 ##indexing simple polygons over the completeref set
 stopcheck = False
@@ -289,6 +333,7 @@ i = 0
 while not stopcheck:
    columnstepcheck = False
    while not columnstepcheck:
+      print(completeref[currentnode]['position'])
       polypos = [completeref[currentnode]['position']]
       for j in range(0,3):
          currentposition = completeref[currentnode]['position']
@@ -318,51 +363,7 @@ while not stopcheck:
    currentnode = nextrowval
    nextrowval = completeref[currentnode]['right']
 ##finished indexing simple polygons
-   
-##pass to complete connections between boundary and non boundary nodes
-for node in boundarydict:
-   if completeref[node]['up'] != None:
-      neignode = completeref[node]['up']
-      if completeref[neignode]['down'] == None:
-         completeref[neignode]['down'] = node
-         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
-         completeref[node]['crossing'] = completeref[neignode]['crossing']
-         if neighnode in crossingnodes:
-            crossingnodes[neighnode]['down'] = node
-         if neighnode in nodes:
-            nodes[neighnode]['down'] = node
-   if completeref[node]['down'] != None:
-      neignode = completeref[node]['down']
-      if completeref[neignode]['up'] == None:
-         completeref[neignode]['up'] = node
-         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
-         completeref[node]['crossing'] = completeref[neignode]['crossing']
-         if neighnode in crossingnodes:
-            crossingnodes[neighnode]['up'] = node
-         if neighnode in nodes:
-            nodes[neighnode]['up'] = node
-   if completeref[node]['left'] != None:
-      neignode = completeref[node]['left']
-      if completeref[neignode]['right'] == None:
-         completeref[neignode]['right'] = node
-         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
-         completeref[node]['crossing'] = completeref[neignode]['crossing']
-         if neighnode in crossingnodes:
-            crossingnodes[neighnode]['right'] = node
-         if neighnode in nodes:
-            nodes[neighnode]['right'] = node
-   if completeref[node]['right'] != None:
-      neignode = completeref[node]['right']
-      if completeref[neignode]['left'] == None:
-         completeref[neignode]['left'] = node
-         boundarydict[node]['crossing'] = completeref[neignode]['crossing']
-         completeref[node]['crossing'] = completeref[neignode]['crossing']
-         if neighnode in crossingnodes:
-            crossingnodes[neighnode]['left'] = node
-         if neighnode in nodes:
-            nodes[neighnode]['left'] = node
-## finished completion on boundary pass
-         
+
 ##recursive function to check crossing
 def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
    check = False
