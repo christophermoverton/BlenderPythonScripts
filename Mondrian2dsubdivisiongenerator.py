@@ -147,8 +147,9 @@ for xboundary in xboundaries:
    boundarydictrev[(xboundary,ypos)] = i
    boundarydict[i] = attr
    prevnode = i
-   if i == -1:
-      nprevnode = i
+   i -= 1
+   if i == -2:
+      nprevnode = prevnode
       for node in nodexirank:
          attr = {}
          attr['left'] = None
@@ -272,7 +273,7 @@ vertpostoindex = {}
 i = 0
 for nodepos in completerefrev:
    vertices.append(nodepos)
-   verpostoindex[nodepos] = i
+   vertpostoindex[nodepos] = i
    i += 1
 ##finished reindexing vertices
 
@@ -281,12 +282,12 @@ stopcheck = False
 startposition = (0,0)
 currentnode = completerefrev[startposition]
 currentposition = startposition
-nextrowval = completeref[startnode]['right']
+nextrowval = completeref[currentnode]['right']
 polynodesrev = {}
 polynodes = {}
 i = 0
 while not stopcheck:
-   columnstopcheck = False
+   columnstepcheck = False
    while not columnstepcheck:
       polypos = [completeref[currentnode]['position']]
       for j in range(0,3):
@@ -311,8 +312,8 @@ while not stopcheck:
             polypos.append(currentposition)
          
          currentnode = nextpos
-      polynodesrev[polypos] = i
-      polynodes[i] = polypos
+      polynodesrev[tuple(polypos)] = i
+      polynodes[i] = tuple(polypos)
       i += 1
    currentnode = nextrowval
    nextrowval = completeref[currentnode]['right']
