@@ -334,9 +334,9 @@ i = 0
 while not stopcheck:
    columnstepcheck = False
    while not columnstepcheck:
-      print(completeref[currentnode]['position'])
-      polypos = [completeref[currentnode]['position']]
-      for j in range(0,3):
+      ##print(completeref[currentnode]['position'])
+      polypos = []##[completeref[currentnode]['position']]
+      for j in range(0,4):
          currentposition = completeref[currentnode]['position']
          if j == 0:
             nextpos = completeref[currentnode]['up']
@@ -354,10 +354,12 @@ while not stopcheck:
          elif j == 3:
             nextpos = completeref[currentnode]['left']
             nextpos = completeref[nextpos]['up']
-         if j != 3:
-            polypos.append(currentposition)
+         ##if j != 3:
+         polypos.append(currentposition)
          
          currentnode = nextpos
+      if columnstepcheck:
+         continue
       polynodesrev[tuple(polypos)] = i
       polynodes[i] = tuple(polypos)
       i += 1
