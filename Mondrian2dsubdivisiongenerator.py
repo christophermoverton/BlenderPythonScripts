@@ -223,6 +223,11 @@ for xboundary in xboundaries:
    ypos = dimy
    attr['position'] = (xboundary, ypos)
    attr['down'] = prevnode
+   if xboundary != 0:
+      xpos = nodes[nodexirank[len(nodexirank)-1]]['position'][0]
+      bnnode = boundarydictrev[(xpos,ypos)]
+      attr['left'] = bnnode
+      boundarydict[bnnode]['right'] = i
    boundarydictrev[(xboundary,ypos)] = i
    boundarydict[i] = attr
    if checki == 0:
