@@ -74,7 +74,7 @@ for node in nodes:
         if crnodepos > 0:
             if nodeyirank[crnodepos-1] == nodeyirank[yrank-1]:
                 nodevald = nodeyirank[yrank-1]
-                nodes[node]['up'] = copynranks[cr]
+                nodes[node]['up'] = nodeval##copynranks[cr]
             else:
                 nodevald = yrank*factor + nodeyirank[crnodepos-1]
         attr['down'] = nodevald
@@ -82,7 +82,7 @@ for node in nodes:
         if crnodepos < len(nodeyirank)-1:
             if nodeyirank[crnodepos+1] == nodeyirank[yrank-1]:
                 nodevald = nodeyirank[yrank-1]
-                nodes[node]['down'] = copynranks[cr]
+                nodes[node]['down'] = nodeval ##copynranks[cr]
             else:
                 nodevald = yrank*factor + nodeyirank[crnodepos+1]
         attr['up'] = nodevald
@@ -103,7 +103,7 @@ for node in nodes:
       if crnodepos > 0:
          if nodexirank[crnodepos-1] == nodexirank[xrank]:
              nodevald = nodexirank[xrank]
-             nodes[node]['right'] = copynranks[cr]
+             nodes[node]['right'] = nodeval##copynranks[cr]
          else:
              nposx = nodes[nodexirank[crnodepos-1]]['position'][0]
              nodevald = crossingnodesrev[(nposx,posy)]
@@ -112,7 +112,7 @@ for node in nodes:
       if crnodepos < len(nodexirank)-1:
          if nodexirank[crnodepos+1] == nodexirank[xrank]:
              nodevald = nodexirank[xrank]
-             nodes[node]['left'] = copynranks[cr]
+             nodes[node]['left'] = nodeval ##copynranks[cr]
          else:
              nposx = nodes[nodexirank[crnodepos+1]]['position'][0]
              ##print(crossingnodesrev)
@@ -121,6 +121,7 @@ for node in nodes:
       crossingnodes[nodeval] = attr
 ## randomize crossings
 ## crossing = 1 vertical  crossing = 0 lateral
+print("nodes: ", nodes)
 for node in crossingnodes:
    randval = random.random()
    if randval >= .5:
