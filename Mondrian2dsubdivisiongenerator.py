@@ -647,13 +647,14 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
    crosslists = []
    print('rnodeposneighbors: ', rnodeposneighbors)
    print('rnodepoly: ', rnodepoly)
+   print('spostopolys: ', spostopolys)
    for nnodepos in rnodeposneighbors:
       nextindex = nnodepositiontoindex[nnodepos]
 
       inpasslist = True
       neighbornodepos = nnodepos
-      processedpolys = [rnodepoly]
-      procpositions = [rnodepos]
+      processedpolys = [rnodepoly[0]]
+      procpositions = [rnodepos,neighbornodepos]
       i = 0
       while inpasslist and i < 100:
          polyslist = spostopolys[neighbornodepos]
@@ -678,11 +679,11 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
    crosslist2 = crosslists[1]
    node2pos = None
    if zerox:
-      node2pos = (crosslist1[len(crosslist1)-1][0],
-                  crosslist2[len(crosslist2)-1][1])
-   else:
       node2pos = (crosslist2[len(crosslist2)-1][0],
                   crosslist1[len(crosslist1)-1][1])
+   else:
+      node2pos = (crosslist1[len(crosslist1)-1][0],
+                  crosslist2[len(crosslist2)-1][1])
    print('crosslist1[0]: ', crosslist1[0])
    print('node2pos',node2pos)
    vertposlist = [crosslist1[0],crosslist1[len(crosslist1)-1],
@@ -887,6 +888,7 @@ for node in nodes:
 ##         vpos2 = completeref[crosslist2[0]]['position']
 ##         vpos3 = completeref[crosslist2[len(crosslist2)-1]]['position']
 ##         vpos4 = completeref[crosslist3[0]]['position']
+         print('vposlist: ', vposlist)
          vpos1,vpos2,vpos3,vpos4 = vposlist
          vi1 = vertpostoindex[vpos1]
          vi2 = vertpostoindex[vpos2]
