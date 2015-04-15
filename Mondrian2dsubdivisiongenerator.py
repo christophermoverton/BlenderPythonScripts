@@ -369,6 +369,8 @@ while not stopcheck:
             nextpos = completeref[currentnode]['down']
          elif j == 3:
             nextpos = completeref[currentnode]['left']
+            if nextpos == None:
+               print('missed assignment: ', currentnode)
             nextpos = completeref[nextpos]['up']
          ##if j != 3:
          polypos.append(currentposition)
@@ -484,6 +486,8 @@ def nodecolumncheck(minpos, maxpos, pnodes, crosslist, direction,
    eqcheck = False
    i = 0
    print('crosslist nodecolumncheck: ', crosslist)
+   print('minpos: ', minpos)
+   print('maxpos: ', maxpos)
    for node in crosslist:
       pos = completeref[node]['position']
       xpost = (pos[0] == 0) or (pos[0] == dimx)
@@ -573,14 +577,20 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
             if j == 0:
                nextpos = completeref[currentnode]['up']
                print('j==0 nextpos: ', nextpos)
-               nextposy = completeref[nextpos]['position'][1]
+               nextposy = None
+               if nextpos != None:
+                  nextposy = completeref[nextpos]['position'][1]
                t2 = nextpos == None
                if nextposy > maxposy or t2:
                   columnstepcheck = True
+                  if currentposition[0] >= maxpos:
+                     stopcheck = True
                   break
             elif j == 1:
                nextpos = completeref[currentnode]['right']
-               nextposx = completeref[nextpos]['position'][0]
+               nextposx = None
+               if nextpos != None:
+                  nextposx = completeref[nextpos]['position'][0]
                t2 = nextpos == None
                if nextposx > maxposx or t2:
                   columnstepcheck = True
@@ -626,14 +636,16 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
    ## for a given direction
    for direction in directions:
       nnode = completeref[rnode][direction]
-      nnodepos = completeref[nnode]['position']
-      if nnodepos in rnodepoly:
+      nnodepos = None
+      if nnode != None:
+         nnodepos = completeref[nnode]['position']
+      if nnodepos in rnodepoly[0]:
          orthogdirections.append(direction)
          rnodeposneighbors.append(nnodepos)
          nnodepositiontoindex[nnodepos] = i
       i += 1
    crosslists = []
-   print('rnodeposneighbors: ')
+   print('rnodeposneighbors: ', rnodeposneighbors)
    print('rnodepoly: ', rnodepoly)
    for nnodepos in rnodeposneighbors:
       nextindex = nnodepositiontoindex[nnodepos]
@@ -642,7 +654,8 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
       neighbornodepos = nnodepos
       processedpolys = [rnodepoly]
       procpositions = [rnodepos]
-      while inpasslist:
+      i = 0
+      while inpasslist and i < 10:
          polyslist = spostopolys[neighbornodepos]
          for poly in polyslist:
             t1 = poly in processedpolys
@@ -653,6 +666,7 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
                procpositions.append(neighbornodepos)
             elif not t1 and not t2:
                inpasslist = False
+         i += 1
       crosslists.append(procpositions)
    list1 = crosslists[0]
    xdist = abs(list1[0][0] -list1[len(list1)-1][0])
