@@ -655,7 +655,7 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
       processedpolys = [rnodepoly]
       procpositions = [rnodepos]
       i = 0
-      while inpasslist and i < 10:
+      while inpasslist and i < 100:
          polyslist = spostopolys[neighbornodepos]
          for poly in polyslist:
             t1 = poly in processedpolys
@@ -668,6 +668,7 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
                inpasslist = False
          i += 1
       crosslists.append(procpositions)
+   print ("Crosslists: ", crosslists) 
    list1 = crosslists[0]
    xdist = abs(list1[0][0] -list1[len(list1)-1][0])
    zerox = False
@@ -677,11 +678,13 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
    crosslist2 = crosslists[1]
    node2pos = None
    if zerox:
-      node2pos = (crosslist2[len(crosslist2)-1],
-                  crosslist1[len(crosslist1)-1])
+      node2pos = (crosslist1[len(crosslist1)-1][0],
+                  crosslist2[len(crosslist2)-1][1])
    else:
-      node2pos = (crosslist1[len(crosslist1)-1],
-                  crosslist2[len(crosslist2)-1])
+      node2pos = (crosslist2[len(crosslist2)-1][0],
+                  crosslist1[len(crosslist1)-1][1])
+   print('crosslist1[0]: ', crosslist1[0])
+   print('node2pos',node2pos)
    return (crosslist1[0],crosslist1[len(crosslist1)-1],
            node2pos, crosslist2[len(crosslist2)-1])
                   
@@ -720,7 +723,7 @@ for node in nodes:
          crossendnode = crosslist[len(crosslist)-1]
          if crossendnode == None:
             del crosslist[len(crosslist)-1]
-         if len(crosslist) == 1:
+         if len(crosslist) <= 1:
             continue    
          if switch1 and switch2:
             direction = 'up'
@@ -788,7 +791,7 @@ for node in nodes:
          if crossendnode == None:
             del crosslist2[len(crosslist2)-1]
          print('crosslist2: ', crosslist2)
-         if len(crosslist2) == 1:
+         if len(crosslist2) <= 1:
             continue
          print('pnodes: ',pnodes)
          ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
