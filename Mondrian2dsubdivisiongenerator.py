@@ -479,7 +479,7 @@ def checkneighbornode(crosslist, crossingnodes, nodes, direction):
       
 ##function to check within face subdivision area
 def nodecolumncheck(minpos, maxpos, pnodes, crosslist, direction,
-                    completeref):
+                    completeref, selfnode):
    check = True
    eqcheck = False
    i = 0
@@ -496,12 +496,16 @@ def nodecolumncheck(minpos, maxpos, pnodes, crosslist, direction,
          if ypost:
             continue
          nodepos = pnodes[ypos]
+         if nodepos == selfnode:
+            continue
          npos = nodes[nodepos]['position'][0]
       else:
          xpos = pos[0]
          if xpost:
             continue
          nodepos = pnodes[xpos]
+         if nodepos == selfnode:
+            continue
          npos = nodes[nodepos]['position'][1]
       check1 = npos >= minpos
       check2 = npos <= maxpos
@@ -557,9 +561,11 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
    nextrowval = completeref[currentnode]['right']
    polynodeslist = []
    postopolynodes = {}
-
+   print('buildfacesimplepolys minpos: ', minpos)
+   print('buildfacesimplepolys maxpos: ', maxpos)
+   print('nextrowval start: ',nextrowval)
    while not stopcheck:
-      columnstopcheck = False
+      columnstepcheck = False
       while not columnstepcheck:
          polypos = []##[completeref[currentnode]['position']]
          for j in range(0,4):
@@ -595,8 +601,10 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
             else:
                postopolynodes[pos] = [polypos]
       if stopcheck:
-         continue         
+         continue
+      print('polynodeslist: ',polynodeslist)
       currentnode = nextrowval
+      print('currentnode: ', currentnode)
       nextrowval = completeref[currentnode]['right']
    return polynodeslist, postopolynodes
 ## end function simple polynode build
@@ -756,13 +764,14 @@ for node in nodes:
          crossendnode = crosslist2[len(crosslist2)-1]
          if crossendnode == None:
             del crosslist2[len(crosslist2)-1]
-   
+         print('crosslist2: ', crosslist2)
          if len(crosslist2) == 1:
             continue
          print('pnodes: ',pnodes)
          ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
                                                       pnodes, crosslist2,
-                                                      direction3, completeref)
+                                                      direction3, completeref,
+                                                      node)
          c2index = None
          if not ncolchk:
             if not eqcheck:
@@ -772,6 +781,7 @@ for node in nodes:
          else:
             c2index = len(crosslist2)
          crosslist2 = crosslist2[0:c2index]
+         print('crosslist2: ', crosslist2)
          cedgepos3 = None
          cedgepos4 = None
          if direction4:
