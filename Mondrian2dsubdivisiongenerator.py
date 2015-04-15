@@ -724,25 +724,29 @@ for node in nodes:
             continue    
          if switch1 and switch2:
             direction = 'up'
-            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
-            minpos = completeref[crosslist[0]]['position'][1]
          elif switch1 and not switch2:
             direction = 'down'
-            minpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
-            maxpos = completeref[crosslist[0]]['position'][1]
          elif not switch1 and switch2:
             direction = 'right'
-            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
-            minpos = completeref[crosslist[0]]['position'][0]
          else:
-            direction = 'left'
-            minpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
-            maxpos = completeref[crosslist[0]]['position'][0]
-        
+            direction = 'left'        
          ncheck, nodeindex = checkneighbornode(crosslist, completeref,
                                                nodes, direction)
          if ncheck != None:
             crosslist = crosslist[0:nodeindex+1]
+         if switch1 and switch2:
+            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+            minpos = completeref[crosslist[0]]['position'][1]
+         elif switch1 and not switch2:
+            minpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+            maxpos = completeref[crosslist[0]]['position'][1]
+         elif not switch1 and switch2:
+            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+            minpos = completeref[crosslist[0]]['position'][0]
+         else:
+            minpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+            maxpos = completeref[crosslist[0]]['position'][0]
+            
          switch3 = None
          switch4 = None
          direction3 = None
@@ -853,7 +857,7 @@ for node in nodes:
                                            completeref, completerefrev)
          for poly in spolys:
             if not poly in nopasscrosslist:
-               nopasscrosslist.apppend(poly)
+               nopasscrosslist.append(poly)
 ##         for cnode in allnodescrosslist:
 ##            if not cnode in nopasscrosslist:
 ##               nopasscrosslist.append(cnode)
