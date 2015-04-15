@@ -572,14 +572,17 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
             currentposition = completeref[currentnode]['position']
             if j == 0:
                nextpos = completeref[currentnode]['up']
+               print('j==0 nextpos: ', nextpos)
                nextposy = completeref[nextpos]['position'][1]
-               if nextposy > maxposy:
+               t2 = nextpos == None
+               if nextposy > maxposy or t2:
                   columnstepcheck = True
                   break
             elif j == 1:
                nextpos = completeref[currentnode]['right']
                nextposx = completeref[nextpos]['position'][0]
-               if nextposx > maxposx:
+               t2 = nextpos == None
+               if nextposx > maxposx or t2:
                   columnstepcheck = True
                   stopcheck = True
                   break
@@ -630,6 +633,8 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
          nnodepositiontoindex[nnodepos] = i
       i += 1
    crosslists = []
+   print('rnodeposneighbors: ')
+   print('rnodepoly: ', rnodepoly)
    for nnodepos in rnodeposneighbors:
       nextindex = nnodepositiontoindex[nnodepos]
 
@@ -819,6 +824,7 @@ for node in nodes:
          ccontinue = False
          passlist = []
          rootpoly = spostopolys[completeref[node]['position']]
+         rnodepos = completeref[node]['position']
          for poly in spolys:
             if poly in nopasscrosslist:
                if poly == rootpoly:
@@ -828,7 +834,7 @@ for node in nodes:
                passlist.append(poly)
          if ccontinue:
             continue
-         vposlist = rebuildfacesimplepolys(rnodepos, rnodepoly,
+         vposlist = rebuildfacesimplepolys(rnodepos, rootpoly,
                                            passlist, spostopolys,
                                            completeref, completerefrev)
          for poly in spolys:
