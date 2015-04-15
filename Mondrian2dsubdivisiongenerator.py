@@ -1,6 +1,8 @@
 #Mondrian like subdivision generator
 ##import bpy
 import random
+global dimx
+global dimy
 dimx = 50
 dimy = 65
 totalnodes = 3
@@ -291,6 +293,8 @@ for nodepos in completerefrev:
 ##finished reindexing vertices
    
 ##pass to complete connections between boundary and non boundary nodes
+##one way passes have been completed above, but I hadn't ensured
+##that bijection relations were fully done.
 for node in boundarydict:
    if completeref[node]['up'] != None:
       neignode = completeref[node]['up']
@@ -375,6 +379,8 @@ while not stopcheck:
       polynodesrev[tuple(polypos)] = i
       polynodes[i] = tuple(polypos)
       i += 1
+   if stopcheck:
+      continue
    currentnode = nextrowval
    nextrowval = completeref[currentnode]['right']
 ##finished indexing simple polygons
@@ -384,7 +390,7 @@ def checkcross(crossval, node, crossingnodes, dirswitch, crosslist):
    check = False
    if crossval:
       if dirswitch:
-         topnode = crossingnodes[node]['top']
+         topnode = crossingnodes[node]['up']
 ##         if topnode in nopasscrosslist:
 ##            return crosslist
          crosslist.append(topnode)
@@ -477,17 +483,26 @@ def nodecolumncheck(minpos, maxpos, pnodes, crosslist, direction,
    check = True
    eqcheck = False
    i = 0
+   print('crosslist nodecolumncheck: ', crosslist)
    for node in crosslist:
       pos = completeref[node]['position']
+      xpost = (pos[0] == 0) or (pos[0] == dimx)
+      ypost = (pos[1] == 0) or (pos[1] == dimy)
+      if xpost and ypost:
+         continue
       npos = None
-      if not direction:
+      if direction:
          ypos = pos[1]
+         if ypost:
+            continue
          nodepos = pnodes[ypos]
-         npos = nodes[nodepos]['position'][1]
+         npos = nodes[nodepos]['position'][0]
       else:
          xpos = pos[0]
+         if xpost:
+            continue
          nodepos = pnodes[xpos]
-         npos = nodes[nodepos]['position'][0]
+         npos = nodes[nodepos]['position'][1]
       check1 = npos >= minpos
       check2 = npos <= maxpos
       check3 = npos == minpos
@@ -539,15 +554,15 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
    maxposy = maxpos[1]
    currentnode = completerefrev[startposition]
    currentposition = startposition
-   nextrowval = completeref[startnode]['right']
+   nextrowval = completeref[currentnode]['right']
    polynodeslist = []
    postopolynodes = {}
 
    while not stopcheck:
       columnstopcheck = False
       while not columnstepcheck:
-         polypos = [completeref[currentnode]['position']]
-         for j in range(0,3):
+         polypos = []##[completeref[currentnode]['position']]
+         for j in range(0,4):
             currentposition = completeref[currentnode]['position']
             if j == 0:
                nextpos = completeref[currentnode]['up']
@@ -567,17 +582,20 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
             elif j == 3:
                nextpos = completeref[currentnode]['left']
                nextpos = completeref[nextpos]['up']
-            if j != 3:
-               polypos.append(currentposition)
+            ##if j != 3:
+            polypos.append(currentposition)
                   
             currentnode = nextpos
+         if columnstepcheck:
+            continue
          polynodeslist.append(polypos)
          for pos in polypos:
             if pos in postopolynodes:
                postopolynodes[pos].append(polypos)
             else:
                postopolynodes[pos] = [polypos]
-         
+      if stopcheck:
+         continue         
       currentnode = nextrowval
       nextrowval = completeref[currentnode]['right']
    return polynodeslist, postopolynodes
@@ -671,29 +689,29 @@ for node in nodes:
          crosslist = [node] 
          crosslist = checkcross(switch1, node, completeref,
                                 switch2, crosslist)
-
-         if switch1 and switch2:
-            direction = 'up'
-            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
-            minpos = completeref[0]['position'][1]
-         elif switch1 and not switch2:
-            direction = 'down'
-            minpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
-            maxpos = completeref[0]['position'][1]
-         elif not switch1 and switch2:
-            direction = 'right'
-            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
-            minpos = completeref[0]['position'][0]
-         else:
-            direction = 'left'
-            minpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
-            maxpos = completeref[0]['position'][0]
+         print('crosslist',crosslist)
          crossendnode = crosslist[len(crosslist)-1]
          if crossendnode == None:
             del crosslist[len(crosslist)-1]
-   
          if len(crosslist) == 1:
-            continue         
+            continue    
+         if switch1 and switch2:
+            direction = 'up'
+            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+            minpos = completeref[crosslist[0]]['position'][1]
+         elif switch1 and not switch2:
+            direction = 'down'
+            minpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+            maxpos = completeref[crosslist[0]]['position'][1]
+         elif not switch1 and switch2:
+            direction = 'right'
+            maxpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+            minpos = completeref[crosslist[0]]['position'][0]
+         else:
+            direction = 'left'
+            minpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+            maxpos = completeref[crosslist[0]]['position'][0]
+        
          ncheck, nodeindex = checkneighbornode(crosslist, completeref,
                                                nodes, direction)
          if ncheck != None:
@@ -727,7 +745,7 @@ for node in nodes:
             direction3 = 1
             direction4 = 0
          pnodes = None
-         if direction3:
+         if not direction3:
             pnodes = xpnodes
          else:
             pnodes = ypnodes
@@ -741,6 +759,7 @@ for node in nodes:
    
          if len(crosslist2) == 1:
             continue
+         print('pnodes: ',pnodes)
          ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
                                                       pnodes, crosslist2,
                                                       direction3, completeref)
@@ -765,7 +784,7 @@ for node in nodes:
          crosslist4 = buildnodesedge(cedgepos4, crosslist2, completeref, direction3)
          allnodescrosslist = crosslist+crosslist2+crosslist3+crosslist4
          completeref = updatecrossings(completeref, crosslist, crosslist3)
-         completeref = updatecrossings(completeref, crosslis2, crosslist4)
+         completeref = updatecrossings(completeref, crosslist2, crosslist4)
          if direction == 'up':
             maxpos = completeref[crosslist2[0]]['position']
             minpos = completeref[crosslist[0]]['position']
