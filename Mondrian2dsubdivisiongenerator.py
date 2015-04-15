@@ -685,10 +685,26 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
                   crosslist1[len(crosslist1)-1][1])
    print('crosslist1[0]: ', crosslist1[0])
    print('node2pos',node2pos)
-   return (crosslist1[0],crosslist1[len(crosslist1)-1],
-           node2pos, crosslist2[len(crosslist2)-1])
-                  
-   
+   vertposlist = [crosslist1[0],crosslist1[len(crosslist1)-1],
+                  node2pos, crosslist2[len(crosslist2)-1]]
+   ## in order to ensure proper keying on this poly we might want to
+   ## to ensure that the face is ordered similarly to the simple
+   ## poly method where minx, miny is the starting vertex, and
+   ## maxx,maxy vert is in the 3rd vertex position, thus I sort
+   ## the vertices first by x positions from smallest to largest,
+   ##and then different x groups (remember two x's are the same on the
+   ##rectangle for each group), sorting by the y's.  I reverse the
+   ##the sort order on the 2nd group to ensure the maxx, maxy is
+   ##in the 1rst order of the 2nd group or when lists are concatenated
+   ##in the 3rd position.  
+   vertposlist.sort(key=lambda tup: tup[0])
+   vertpos1, vertpos2, vertpos3, vertpos4 = vertposlist
+   vertposlist1 = [vertpos1,vertpos2]
+   vertposlist2 = [vertpos3,vertpos4]
+   vertposlist1.sort(key=lambda tup: tup[1])
+   vertposlist2.sort(key=lambda tup: tup[1], reverse = True)
+   vertposlist = vertposlist1 + vertposlist2
+   return tuple(vertposlist)
 ## construct vertices faces crossings
 facecnt = 0
 vertcnt = 0
@@ -791,8 +807,7 @@ for node in nodes:
          if crossendnode == None:
             del crosslist2[len(crosslist2)-1]
          print('crosslist2: ', crosslist2)
-         if len(crosslist2) <= 1:
-            continue
+
          print('pnodes: ',pnodes)
          ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
                                                       pnodes, crosslist2,
@@ -807,6 +822,8 @@ for node in nodes:
          else:
             c2index = len(crosslist2)
          crosslist2 = crosslist2[0:c2index]
+         if len(crosslist2) <= 1:
+            continue
          print('crosslist2: ', crosslist2)
          cedgepos3 = None
          cedgepos4 = None
