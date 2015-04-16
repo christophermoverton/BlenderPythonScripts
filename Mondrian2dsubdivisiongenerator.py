@@ -5,13 +5,13 @@ global dimx
 global dimy
 dimx = 50
 dimy = 65
-totalnodes = 3
+totalnodes = 10
 meshName = "Mondrian"
 obName = "MondrianObj"
-##me = bpy.data.meshes.new(meshName)
-##ob = bpy.data.objects.new(obName, me)
-##ob.location = bpy.context.scene.cursor_location
-##bpy.context.scene.objects.link(ob)
+me = bpy.data.meshes.new(meshName)
+ob = bpy.data.objects.new(obName, me)
+ob.location = bpy.context.scene.cursor_location
+bpy.context.scene.objects.link(ob)
 ##track edges on mondrian generator and vertices
 nodes = {}
 nodepostoi = {}
@@ -585,9 +585,14 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
                if nextpos != None:
                   nextposy = completeref[nextpos]['position'][1]
                t2 = nextpos == None
-               if nextposy > maxposy or t2:
+               if t2:
                   columnstepcheck = True
-                  if currentposition[0] >= maxpos:
+                  if currentposition[0] >= maxposx:
+                     stopcheck = True
+                  break
+               if nextposy > maxposy:
+                  columnstepcheck = True
+                  if currentposition[0] >= maxposx:
                      stopcheck = True
                   break
             elif j == 1:
@@ -596,7 +601,11 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
                if nextpos != None:
                   nextposx = completeref[nextpos]['position'][0]
                t2 = nextpos == None
-               if nextposx > maxposx or t2:
+               if t2:
+                  columnstepcheck = True
+                  stopcheck = True
+                  break                  
+               if nextposx > maxposx:
                   columnstepcheck = True
                   stopcheck = True
                   break
@@ -907,7 +916,7 @@ for node in nodes:
          facegroup = (vi1,vi2,vi3,vi4)
          faces.append(facegroup)
 
-## work remainders
+## work remainders reiterates the same procedure much as given above.
 for polypositionsface in polynodesrev:
    if list(polypositionsface) in nopasscrosslist:
       continue
@@ -926,8 +935,7 @@ for polypositionsface in polynodesrev:
             crossendnode = crosslist[len(crosslist)-1]
             if crossendnode == None:
                del crosslist[len(crosslist)-1]
-            if len(crosslist) <= 1:
-               continue    
+
             if switch1 and switch2:
                direction = 'up'
             elif switch1 and not switch2:
@@ -940,6 +948,8 @@ for polypositionsface in polynodesrev:
                                                   nodes, direction)
             if ncheck != None:
                crosslist = crosslist[0:nodeindex+1]
+            if len(crosslist) <= 1:
+               continue    
             if switch1 and switch2:
                maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
                minpos = completeref[crosslist[0]]['position'][1]
@@ -1083,6 +1093,6 @@ for polypositionsface in polynodesrev:
             facegroup = (vi1,vi2,vi3,vi4)
             faces.append(facegroup)
       
-##me.from_pydata(vertices,[],faces)      
-##me.update(calc_edges=True)      
+me.from_pydata(vertices,[],faces)      
+me.update(calc_edges=True)      
 #I get closer to finishing!  Whittling away this little program!
