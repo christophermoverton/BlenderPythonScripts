@@ -648,25 +648,31 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
    print('rnodeposneighbors: ', rnodeposneighbors)
    print('rnodepoly: ', rnodepoly)
    print('spostopolys: ', spostopolys)
+   print('passlist: ', passlist)
    for nnodepos in rnodeposneighbors:
       nextindex = nnodepositiontoindex[nnodepos]
-
+      print('nextindex: ', nextindex)
       inpasslist = True
       neighbornodepos = nnodepos
-      processedpolys = [rnodepoly[0]]
+      processedpolys = rnodepoly
       procpositions = [rnodepos,neighbornodepos]
+      prevneighnodepos = neighbornodepos
       i = 0
       while inpasslist and i < 100:
          polyslist = spostopolys[neighbornodepos]
          for poly in polyslist:
-            t1 = poly in processedpolys
+            t1 = poly not in processedpolys
             t2 = poly in passlist
-            if (not t1) and t2:
+            if t1 and t2:
+               print('processedpoly add: ', poly)
                processedpolys.append(poly)
                neighbornodepos = poly[nextindex]
                procpositions.append(neighbornodepos)
-            elif not t1 and not t2:
+            elif t1 and not t2:
                inpasslist = False
+         if prevneighnodepos == neighbornodepos:
+            inpasslist = True
+         prevneighnodepos = neighbornodepos
          i += 1
       crosslists.append(procpositions)
    print ("Crosslists: ", crosslists) 
