@@ -287,7 +287,9 @@ vertices = []
 vertpostoindex = {}
 i = 0
 for nodepos in completerefrev:
-   vertices.append(nodepos)
+   ##vertices.append(nodepos)
+   npx, npy = nodepos
+   vertices.append([float(npx),float(npy),0.0])
    vertpostoindex[nodepos] = i
    i += 1
 ##finished reindexing vertices
@@ -642,7 +644,7 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
       if nnodepos in rnodepoly[0]:
          orthogdirections.append(direction)
          rnodeposneighbors.append(nnodepos)
-         nnodepositiontoindex[nnodepos] = i
+         nnodepositiontoindex[nnodepos] = rnodepoly[0].index(nnodepos)
       i += 1
    crosslists = []
    print('rnodeposneighbors: ', rnodeposneighbors)
