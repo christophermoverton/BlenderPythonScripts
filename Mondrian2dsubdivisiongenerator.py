@@ -3,28 +3,41 @@
 import random
 global dimx
 global dimy
-dimx = 50
-dimy = 65
+dimx = 100
+dimy = 130
 totalnodes = 10
 meshName = "Mondrian"
 obName = "MondrianObj"
-me = bpy.data.meshes.new(meshName)
-ob = bpy.data.objects.new(obName, me)
-ob.location = bpy.context.scene.cursor_location
-bpy.context.scene.objects.link(ob)
+##me = bpy.data.meshes.new(meshName)
+##ob = bpy.data.objects.new(obName, me)
+##ob.location = bpy.context.scene.cursor_location
+##bpy.context.scene.objects.link(ob)
 ##track edges on mondrian generator and vertices
 nodes = {}
 nodepostoi = {}
+randomxlist = []
+randomylist = []
+def getrand(minv, maxv, randlist):
+   val = random.randint(minv,maxv)
+   if val not in randlist:
+      return val
+   else:
+      return getrand(minv,maxv,randlist)
+   
 for i in range(0,totalnodes):
    attr = {}
-   randposx = random.randint(0,dimx)
-   randposy = random.randint(0,dimy)
+   randposx = getrand(0,dimx,randomxlist)
+   randposy = getrand(0,dimy,randomylist)
+##   randposx = random.randint(0,dimx)
+##   randposy = random.randint(0,dimy)
    attr['position'] = (randposx,randposy)
    attr['left'] = None
    attr['right'] = None
    attr['up'] = None
    attr['down'] = None
    attr['crossing'] = None
+   randomxlist.append(randposx)
+   randomylist.append(randposy)
    nodes[i+1] = attr
    nodepostoi[(randposx,randposy)] = i+1
 nodeposlist = list(nodepostoi.keys())   
@@ -373,8 +386,8 @@ while not stopcheck:
             nextpos = completeref[currentnode]['down']
          elif j == 3:
             nextpos = completeref[currentnode]['left']
-            ##if nextpos == None:
-               ##print('missed assignment: ', currentnode)
+            if nextpos == None:
+               print('missed assignment: ', currentnode)
             nextpos = completeref[nextpos]['up']
          ##if j != 3:
          polypos.append(currentposition)
@@ -1093,6 +1106,6 @@ for polypositionsface in polynodesrev:
             facegroup = (vi1,vi2,vi3,vi4)
             faces.append(facegroup)
       
-me.from_pydata(vertices,[],faces)      
-me.update(calc_edges=True)      
+##me.from_pydata(vertices,[],faces)      
+##me.update(calc_edges=True)      
 #I get closer to finishing!  Whittling away this little program!
