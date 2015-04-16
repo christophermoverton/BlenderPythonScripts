@@ -840,7 +840,7 @@ for node in nodes:
          completeref = updatecrossings(completeref, crosslist, crosslist3)
          completeref = updatecrossings(completeref, crosslist2, crosslist4)
          if direction == 'up':
-            maxpos = completeref[crosslist2[0]]['position']
+            maxpos = completeref[crosslist2[len(crosslist2)-1]]['position']
             minpos = completeref[crosslist[0]]['position']
          elif direction == 'down':
             minpos = completeref[crosslist2[len(crosslist2)-1]]['position']
