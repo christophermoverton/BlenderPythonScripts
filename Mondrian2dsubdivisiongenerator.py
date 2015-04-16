@@ -907,6 +907,182 @@ for node in nodes:
          facegroup = (vi1,vi2,vi3,vi4)
          faces.append(facegroup)
 
+## work remainders
+for polypositionsface in polynodesrev:
+   if list(polypositionsface) in nopasscrosslist:
+      continue
+   else:
+      nodepos = polypositionsface[0]  ## we could randomly pick on this simple
+                                      ## face
+      node = completerefrev[nodepos]
+      switches1 = [0,1]
+      switches2 = [0,1]
+      for switch1 in switches1:
+         for switch2 in switches2:
+            crosslist = [node] 
+            crosslist = checkcross(switch1, node, completeref,
+                                   switch2, crosslist)
+            ##print('crosslist',crosslist)
+            crossendnode = crosslist[len(crosslist)-1]
+            if crossendnode == None:
+               del crosslist[len(crosslist)-1]
+            if len(crosslist) <= 1:
+               continue    
+            if switch1 and switch2:
+               direction = 'up'
+            elif switch1 and not switch2:
+               direction = 'down'
+            elif not switch1 and switch2:
+               direction = 'right'
+            else:
+               direction = 'left'        
+            ncheck, nodeindex = checkneighbornode(crosslist, completeref,
+                                                  nodes, direction)
+            if ncheck != None:
+               crosslist = crosslist[0:nodeindex+1]
+            if switch1 and switch2:
+               maxpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+               minpos = completeref[crosslist[0]]['position'][1]
+            elif switch1 and not switch2:
+               minpos = completeref[crosslist[len(crosslist)-1]]['position'][1]
+               maxpos = completeref[crosslist[0]]['position'][1]
+            elif not switch1 and switch2:
+               maxpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+               minpos = completeref[crosslist[0]]['position'][0]
+            else:
+               minpos = completeref[crosslist[len(crosslist)-1]]['position'][0]
+               maxpos = completeref[crosslist[0]]['position'][0]
+               
+            switch3 = None
+            switch4 = None
+            direction3 = None
+            direction4 = None
+            if direction == 'up':
+               #right
+               switch3 = False
+               switch4 = True
+               direction3 = 0
+               direction4 = 1
+            elif direction == 'right':
+               #down
+               switch3 = True
+               swithc4 = False
+               direction3 = 1
+               direction4 = 0
+            elif direction == 'down':
+               #left
+               switch3 = False
+               switch4 = False
+               direction3 = 0
+               direction4 = 1
+            elif direction == 'left':
+               #up
+               switch3 = True
+               switch4 = True
+               direction3 = 1
+               direction4 = 0
+            pnodes = None
+            if not direction3:
+               pnodes = xpnodes
+            else:
+               pnodes = ypnodes
+            cnode = crosslist[len(crosslist)-1]
+            crosslist2 = [cnode]
+            crosslist2 = checkcross(switch3, cnode, completeref,
+                                    switch4, crosslist2)
+            crossendnode = crosslist2[len(crosslist2)-1]
+            if crossendnode == None:
+               del crosslist2[len(crosslist2)-1]
+            ##print('crosslist2: ', crosslist2)
+
+            ##print('pnodes: ',pnodes)
+            ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
+                                                         pnodes, crosslist2,
+                                                         direction3, completeref,
+                                                         node)
+            c2index = None
+            if not ncolchk:
+               if not eqcheck:
+                  c2index = c2nindex
+               else:
+                  c2index = c2nindex+1
+            else:
+               c2index = len(crosslist2)
+            crosslist2 = crosslist2[0:c2index]
+            if len(crosslist2) <= 1:
+               continue
+            ##print('crosslist2: ', crosslist2)
+            cedgepos3 = None
+            cedgepos4 = None
+            if direction4:
+               cedgepos3 = completeref[crosslist2[len(crosslist2)-1]]['position'][0]
+               cedgepos4 = completeref[crosslist[0]]['position'][1]
+            else:
+               cedgepos3 = completeref[crosslist2[len(crosslist2)-1]]['position'][1]
+               cedgepos4 = completeref[crosslist[0]]['position'][0]
+            crosslist3 = buildnodesedge(cedgepos3, crosslist, completeref, direction4)
+            crosslist4 = buildnodesedge(cedgepos4, crosslist2, completeref, direction3)
+            allnodescrosslist = crosslist+crosslist2+crosslist3+crosslist4
+            completeref = updatecrossings(completeref, crosslist, crosslist3)
+            completeref = updatecrossings(completeref, crosslist2, crosslist4)
+            if direction == 'up':
+               maxpos = completeref[crosslist2[len(crosslist2)-1]]['position']
+               minpos = completeref[crosslist[0]]['position']
+            elif direction == 'down':
+               minpos = completeref[crosslist2[len(crosslist2)-1]]['position']
+               maxpos = completeref[crosslist[0]]['position']
+            elif direction == 'right':
+               maxpos = completeref[crosslist[len(crosslist)-1]]['position']
+               minpos = (completeref[crosslist[0]]['position'][0],
+                         completeref[crosslist2[len(crosslist2)-1]]['position'][1])
+            elif direction == 'left':
+               maxpos = (completeref[crosslist[0]]['position'][0],
+                         completeref[crosslist2[len(crosslist2)-1]]['position'][1])
+               minpos = completeref[crosslist[len(crosslist)-1]]['position']
+            spolys,spostopolys = buildfacesimplepolys(minpos, maxpos,
+                                                      polynodesrev,
+                                                      completerefrev, completeref)
+            ##perform simple poly intersection testing, eliminating
+            ##subdivision overlap
+            ydiff = maxpos[1] - minpos[1]
+            xdiff = maxpos[0] - minpos[0]
+            ccontinue = False
+            passlist = []
+            rootpoly = spostopolys[completeref[node]['position']]
+            rnodepos = completeref[node]['position']
+            for poly in spolys:
+               if poly in nopasscrosslist:
+                  if poly == rootpoly:
+                     ccontinue = True
+                     break
+               else:
+                  passlist.append(poly)
+            if ccontinue:
+               continue
+            vposlist = rebuildfacesimplepolys(rnodepos, rootpoly,
+                                              passlist, spostopolys,
+                                              completeref, completerefrev)
+            for poly in spolys:
+               if not poly in nopasscrosslist:
+                  nopasscrosslist.append(poly)
+   ##         for cnode in allnodescrosslist:
+   ##            if not cnode in nopasscrosslist:
+   ##               nopasscrosslist.append(cnode)
+            # Two edges of face determined.
+            # Build vertices
+   ##         vpos1 = completeref[crosslist[0]]['position']
+   ##         vpos2 = completeref[crosslist2[0]]['position']
+   ##         vpos3 = completeref[crosslist2[len(crosslist2)-1]]['position']
+   ##         vpos4 = completeref[crosslist3[0]]['position']
+            ##print('vposlist: ', vposlist)
+            vpos1,vpos2,vpos3,vpos4 = vposlist
+            vi1 = vertpostoindex[vpos1]
+            vi2 = vertpostoindex[vpos2]
+            vi3 = vertpostoindex[vpos3]
+            vi4 = vertpostoindex[vpos4]
+            facegroup = (vi1,vi2,vi3,vi4)
+            faces.append(facegroup)
+      
 ##me.from_pydata(vertices,[],faces)      
 ##me.update(calc_edges=True)      
 #I get closer to finishing!  Whittling away this little program!
