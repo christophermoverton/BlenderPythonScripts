@@ -10,6 +10,8 @@ meshName = "Mondrian"
 obName = "MondrianObj"
 ##me = bpy.data.meshes.new(meshName)
 ##ob = bpy.data.objects.new(obName, me)
+##ob.location = bpy.context.scene.cursor_location
+##bpy.context.scene.objects.link(ob)
 ##track edges on mondrian generator and vertices
 nodes = {}
 nodepostoi = {}
@@ -65,8 +67,8 @@ for node in nodes:
     for cr in range(0,totalnodes-1):
         attr = {}
         nodeval = yrank*factor+copynranks[cr]
-        print(yrank)
-        print("nodeval: ", nodeval)
+        ##print(yrank)
+        ##print("nodeval: ", nodeval)
         posy = nodes[copynranks[cr]]['position'][1]
         attr['position'] = (posx,posy) 
         attr['left'] = None
@@ -117,13 +119,13 @@ for node in nodes:
              nodes[node]['left'] = nodeval ##copynranks[cr]
          else:
              nposx = nodes[nodexirank[crnodepos+1]]['position'][0]
-             ##print(crossingnodesrev)
+             ####print(crossingnodesrev)
              nodevald = crossingnodesrev[(nposx,posy)]
       attr['right'] = nodevald
       crossingnodes[nodeval] = attr
 ## randomize crossings
 ## crossing = 1 vertical  crossing = 0 lateral
-print("nodes: ", nodes)
+##print("nodes: ", nodes)
 for node in crossingnodes:
    randval = random.random()
    if randval >= .5:
@@ -149,9 +151,9 @@ for xboundary in xboundaries:
    attr['position'] = (xboundary, ypos)
    if xboundary != 0:
       xpos = nodes[nodexirank[len(nodexirank)-1]]['position'][0]
-      print('xpos: ',xpos)
+      ##print('xpos: ',xpos)
       bnnode = boundarydictrev[(xpos,ypos)]
-      print('bnnode', bnnode)
+      ##print('bnnode', bnnode)
       attr['left'] = bnnode
       boundarydict[bnnode]['right'] = i
    boundarydictrev[(xboundary,ypos)] = i
@@ -289,7 +291,7 @@ i = 0
 for nodepos in completerefrev:
    ##vertices.append(nodepos)
    npx, npy = nodepos
-   vertices.append([float(npx),float(npy),0.0])
+   vertices.append((float(npx)/dimy,float(npy)/dimy,0.0))
    vertpostoindex[nodepos] = i
    i += 1
 ##finished reindexing vertices
@@ -352,7 +354,7 @@ i = 0
 while not stopcheck:
    columnstepcheck = False
    while not columnstepcheck:
-      ##print(completeref[currentnode]['position'])
+      ####print(completeref[currentnode]['position'])
       polypos = []##[completeref[currentnode]['position']]
       for j in range(0,4):
          currentposition = completeref[currentnode]['position']
@@ -371,8 +373,8 @@ while not stopcheck:
             nextpos = completeref[currentnode]['down']
          elif j == 3:
             nextpos = completeref[currentnode]['left']
-            if nextpos == None:
-               print('missed assignment: ', currentnode)
+            ##if nextpos == None:
+               ##print('missed assignment: ', currentnode)
             nextpos = completeref[nextpos]['up']
          ##if j != 3:
          polypos.append(currentposition)
@@ -487,9 +489,9 @@ def nodecolumncheck(minpos, maxpos, pnodes, crosslist, direction,
    check = True
    eqcheck = False
    i = 0
-   print('crosslist nodecolumncheck: ', crosslist)
-   print('minpos: ', minpos)
-   print('maxpos: ', maxpos)
+   ##print('crosslist nodecolumncheck: ', crosslist)
+   ##print('minpos: ', minpos)
+   ##print('maxpos: ', maxpos)
    for node in crosslist:
       pos = completeref[node]['position']
       xpost = (pos[0] == 0) or (pos[0] == dimx)
@@ -567,9 +569,9 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
    nextrowval = completeref[currentnode]['right']
    polynodeslist = []
    postopolynodes = {}
-   print('buildfacesimplepolys minpos: ', minpos)
-   print('buildfacesimplepolys maxpos: ', maxpos)
-   print('nextrowval start: ',nextrowval)
+   ##print('buildfacesimplepolys minpos: ', minpos)
+   ##print('buildfacesimplepolys maxpos: ', maxpos)
+   ##print('nextrowval start: ',nextrowval)
    while not stopcheck:
       columnstepcheck = False
       while not columnstepcheck:
@@ -578,7 +580,7 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
             currentposition = completeref[currentnode]['position']
             if j == 0:
                nextpos = completeref[currentnode]['up']
-               print('j==0 nextpos: ', nextpos)
+               ##print('j==0 nextpos: ', nextpos)
                nextposy = None
                if nextpos != None:
                   nextposy = completeref[nextpos]['position'][1]
@@ -617,9 +619,9 @@ def buildfacesimplepolys(minpos, maxpos, polynodesrev, completerefrev,
                postopolynodes[pos] = [polypos]
       if stopcheck:
          continue
-      print('polynodeslist: ',polynodeslist)
+      ##print('polynodeslist: ',polynodeslist)
       currentnode = nextrowval
-      print('currentnode: ', currentnode)
+      ##print('currentnode: ', currentnode)
       nextrowval = completeref[currentnode]['right']
    return polynodeslist, postopolynodes
 ## end function simple polynode build
@@ -647,13 +649,13 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
          nnodepositiontoindex[nnodepos] = rnodepoly[0].index(nnodepos)
       i += 1
    crosslists = []
-   print('rnodeposneighbors: ', rnodeposneighbors)
-   print('rnodepoly: ', rnodepoly)
-   print('spostopolys: ', spostopolys)
-   print('passlist: ', passlist)
+   ##print('rnodeposneighbors: ', rnodeposneighbors)
+   ##print('rnodepoly: ', rnodepoly)
+   ##print('spostopolys: ', spostopolys)
+   ##print('passlist: ', passlist)
    for nnodepos in rnodeposneighbors:
       nextindex = nnodepositiontoindex[nnodepos]
-      print('nextindex: ', nextindex)
+      ##print('nextindex: ', nextindex)
       inpasslist = True
       neighbornodepos = nnodepos
       processedpolys = rnodepoly
@@ -666,7 +668,7 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
             t1 = poly not in processedpolys
             t2 = poly in passlist
             if t1 and t2:
-               print('processedpoly add: ', poly)
+               ##print('processedpoly add: ', poly)
                processedpolys.append(poly)
                neighbornodepos = poly[nextindex]
                procpositions.append(neighbornodepos)
@@ -677,7 +679,7 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
          prevneighnodepos = neighbornodepos
          i += 1
       crosslists.append(procpositions)
-   print ("Crosslists: ", crosslists) 
+   ##print ("Crosslists: ", crosslists) 
    list1 = crosslists[0]
    xdist = abs(list1[0][0] -list1[len(list1)-1][0])
    zerox = False
@@ -692,8 +694,8 @@ def rebuildfacesimplepolys(rnodepos, rnodepoly, passlist, spostopolys,
    else:
       node2pos = (crosslist1[len(crosslist1)-1][0],
                   crosslist2[len(crosslist2)-1][1])
-   print('crosslist1[0]: ', crosslist1[0])
-   print('node2pos',node2pos)
+   ##print('crosslist1[0]: ', crosslist1[0])
+   ##print('node2pos',node2pos)
    vertposlist = [crosslist1[0],crosslist1[len(crosslist1)-1],
                   node2pos, crosslist2[len(crosslist2)-1]]
    ## in order to ensure proper keying on this poly we might want to
@@ -744,7 +746,7 @@ for node in nodes:
          crosslist = [node] 
          crosslist = checkcross(switch1, node, completeref,
                                 switch2, crosslist)
-         print('crosslist',crosslist)
+         ##print('crosslist',crosslist)
          crossendnode = crosslist[len(crosslist)-1]
          if crossendnode == None:
             del crosslist[len(crosslist)-1]
@@ -815,9 +817,9 @@ for node in nodes:
          crossendnode = crosslist2[len(crosslist2)-1]
          if crossendnode == None:
             del crosslist2[len(crosslist2)-1]
-         print('crosslist2: ', crosslist2)
+         ##print('crosslist2: ', crosslist2)
 
-         print('pnodes: ',pnodes)
+         ##print('pnodes: ',pnodes)
          ncolchk, eqcheck, c2nindex = nodecolumncheck(minpos, maxpos,
                                                       pnodes, crosslist2,
                                                       direction3, completeref,
@@ -833,7 +835,7 @@ for node in nodes:
          crosslist2 = crosslist2[0:c2index]
          if len(crosslist2) <= 1:
             continue
-         print('crosslist2: ', crosslist2)
+         ##print('crosslist2: ', crosslist2)
          cedgepos3 = None
          cedgepos4 = None
          if direction4:
@@ -896,14 +898,15 @@ for node in nodes:
 ##         vpos2 = completeref[crosslist2[0]]['position']
 ##         vpos3 = completeref[crosslist2[len(crosslist2)-1]]['position']
 ##         vpos4 = completeref[crosslist3[0]]['position']
-         print('vposlist: ', vposlist)
+         ##print('vposlist: ', vposlist)
          vpos1,vpos2,vpos3,vpos4 = vposlist
          vi1 = vertpostoindex[vpos1]
          vi2 = vertpostoindex[vpos2]
          vi3 = vertpostoindex[vpos3]
          vi4 = vertpostoindex[vpos4]
-         facegroup = [vi1,vi2,vi3,vi4]
+         facegroup = (vi1,vi2,vi3,vi4)
          faces.append(facegroup)
-      
-    
+
+##me.from_pydata(vertices,[],faces)      
+##me.update(calc_edges=True)      
 #I get closer to finishing!  Whittling away this little program!
