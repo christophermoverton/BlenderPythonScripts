@@ -1,6 +1,7 @@
 #Mondrian like subdivision generator 2
 ## Different approach relative the first generator.  In this case, using
 ## an ordering based approach as described in the wiki.
+import bpy
 import random
 global dimx
 global dimy
@@ -9,10 +10,10 @@ dimy = 1300
 totalnodes = 10
 meshName = "Mondrian"
 obName = "MondrianObj"
-##me = bpy.data.meshes.new(meshName)
-##ob = bpy.data.objects.new(obName, me)
-##ob.location = bpy.context.scene.cursor_location
-##bpy.context.scene.objects.link(ob)
+me = bpy.data.meshes.new(meshName)
+ob = bpy.data.objects.new(obName, me)
+ob.location = bpy.context.scene.cursor_location
+bpy.context.scene.objects.link(ob)
 def getrand(minv, maxv, randlist):
    val = random.randint(minv,maxv)
    if val not in randlist:
@@ -73,7 +74,7 @@ def findparent(nodepos, poslookuptree, minmaxcoordlist):
                 
                 parenti, i, minmaxcoordlist = findparent(nodepos, poslookupt,
                                                          minmaxcoordlist)
-                break
+                return parenti, i, minmaxcoordlist
             else:
                 parenti = poslookuptree[minmaxpositions]['index']
                 i = poslookuptree[minmaxpositions]['quadrant']
@@ -152,6 +153,7 @@ for q in qlist:
     
 nodeposlistc = nodeposlist[0:len(nodeposlist)]
 del nodeposlistc[0]
+## finish quaternary subdivision assignments
 for nodepos in nodeposlistc:
     minmaxcoordlist = []
     parent, quad, minmaxcoordlist = findparent(nodepos, ptreedict,
@@ -160,3 +162,57 @@ for nodepos in nodeposlistc:
     minmaxcoordlistc = minmaxcoordlist[0:len(minmaxcoordlist)]
     setparent(nodepos, ptreedict, minmaxcoordlistc)
 
+##  if 'postree' node is None then we record the vertices of the quadrant
+##  we use the quadrant minmax position to construct the 4 vertices to a face
+##  we also append these if not in the list of vertices to a vertex list
+##  making note of the position of the vertex in the list we use a vertex
+##  position to index mapping, or we can do this all at once in the
+##  the read the tree algorithm
+
+##  Will need a quaternary recursive search algorithm that reads the entire
+## subdivison tree.
+def buildvertsfaces(ptreedict, vertices, faces):
+    for minmaxpositions in ptreedict:
+        if ptreedict[minmaxpositions]['postree'] == None:
+            minpos, maxpos = minmaxpositions
+            minpostup = (float(minpos[0])/dimy,float(minpos[1])/dimy,0.0)
+            maxpostup = (float(maxpos[0])/dimy,float(maxpos[1])/dimy,0.0)
+            minposindex = None
+            maxposindex = None
+            pos3index = None
+            pos2index = None
+            if minpostup in vertices:
+                minposindex = vertices.index(minpostup)
+            else:
+                vertices.append(minpostup)
+                minposindex = len(vertices)-1
+            if maxpostup in vertices:
+                maxposindex = vertices.index(maxpostup)
+            else:
+                vertices.append(maxpostup)
+                maxposindex = len(vertices)-1
+            pos2 = (float(minpos[0])/dimy,float(maxpos[1])/dimy,0.0)
+            pos3 = (float(maxpos[0])/dimy,float(minpos[1])/dimy,0.0)
+            if pos2 in vertices:
+                pos2index = vertices.index(pos2)
+            else:
+                vertices.append(pos2)
+                pos2index = len(vertices)-1
+            if pos3 in vertices:
+                pos3index = vertices.index(pos3)
+            else:
+                vertices.append(pos3)
+                pos3index = len(vertices)-1
+            face = (minposindex, pos2index, maxposindex, pos3index)
+            faces.append(face)
+        else:
+            ptreedict2 = ptreedict[minmaxpositions]['postree']
+            buildvertsfaces(ptreedict2,vertices,faces)
+            
+## build vertices and faces
+vertices = []
+faces = []
+buildvertsfaces(ptreedict, vertices, faces)
+        
+me.from_pydata(vertices,[],faces)      
+me.update(calc_edges=True)   

@@ -8,3 +8,4 @@ filename = "/home/strangequark2/BlenderPythonScripts/insetextrude.py"
 exec(compile(open(filename).read(), filename, 'exec'))
 
 filename = "/home/strangequark2/BlenderPythonScripts/Mondrian2dsubdivisiongenerator.py"
+filename = "/home/strangequark2/BlenderPythonScripts/Mondrian2subdivisiongenerator2.py"
