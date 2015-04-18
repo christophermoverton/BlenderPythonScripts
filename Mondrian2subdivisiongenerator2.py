@@ -1,6 +1,7 @@
 #Mondrian like subdivision generator 2
 ## Different approach relative the first generator.  In this case, using
 ## an ordering based approach as described in the wiki.
+import random
 global dimx
 global dimy
 dimx = 1000
@@ -18,7 +19,10 @@ def getrand(minv, maxv, randlist):
       return val
    else:
       return getrand(minv,maxv,randlist)
-   
+nodes = {}
+nodepostoi = {}
+randomxlist = []
+randomylist = []   
 for i in range(0,totalnodes):
    attr = {}
    randposx = getrand(1,dimx-1,randomxlist)
@@ -47,29 +51,35 @@ nodeposlist = list(nodepostoi.keys())
 ## processing node precedent
 ##  Need fast position indexing tree lookup and assignment
 ## poslookuptree -> ['index'] and poslookuptree -> ['postree']
-def findparent(nodepos, poslookuptree, minmaxcordlist):
+def findparent(nodepos, poslookuptree, minmaxcoordlist):
     ## using a minpos, maxpos tuple coordinate identifier
     parenti = None
     nodeposx, nodeposy = nodepos
+    print('nodepos: ', nodepos)
     i = 0
     for minmaxpositions in poslookuptree:
         minpos, maxpos = minmaxpositions
         minx, miny = minpos
         maxx, maxy = maxpos
+        print('minmaxpositions: ', minmaxpositions)
         t1 = nodeposx >= minx
         t2 = nodeposx <= maxx
         t3 = nodeposy >= miny
         t4 = nodeposy <= maxy
         if t1 and t2 and t3 and t4:
             if poslookuptree[minmaxpositions]['postree'] != None:
-                minmaxcordlist.append(minmaxpositions)
+                minmaxcoordlist.append(minmaxpositions)
                 poslookupt = poslookuptree[minmaxpositions]['postree']
+                
                 parenti, i, minmaxcoordlist = findparent(nodepos, poslookupt,
-                                                         minmaxcordlist)
+                                                         minmaxcoordlist)
+                break
             else:
                 parenti = poslookuptree[minmaxpositions]['index']
+                i = poslookuptree[minmaxpositions]['quadrant']
+                minmaxcoordlist.append(minmaxpositions)
                 return parenti, i, minmaxcoordlist
-        i += 1
+        ##i += 1
     return parenti, i, minmaxcoordlist
 
 def setparent(nodepos, poslookuptree, minmaxcoordlist):
@@ -100,12 +110,53 @@ def setparent(nodepos, poslookuptree, minmaxcoordlist):
         attr = {}
         attr['index'] = None
         attr['postree'] = None
-        ptreedict = poslookuptree[mmcoord]['postree']
+        attr['quadrant'] = None
+        ptreedict = {}
+        i = 0
         for q in qlist:
-            ptreedict[q] = attr
-##  poslookuptree
+            attr['quadrant'] = i
+            ptreedict[q] = attr.copy()
+            i += 1
+        poslookuptree[mmcoord]['postree'] = ptreedict
+##  poslookuptree is a quaternary search tree 
 poslookuptree = {}
-for nodepos in nodeposlist:
-    attr = {}
-    attr['child']
+##initialize the position lookup tree
+nodepos = nodeposlist[0]
+nodeposx, nodeposy = nodeposlist[0]
+minpos, maxpos = [(0,0),(dimx,dimy)]
+minx, miny = minpos
+maxx, maxy = maxpos
+q1minpos = (minx, nodeposy)
+q1maxpos = (nodeposx, maxy)
+q2minpos = nodepos
+q2maxpos = maxpos
+q3minpos = minpos
+q3maxpos = nodepos
+q4minpos = (nodeposx, miny)
+q4maxpos = (maxx, nodeposy)
+q1coord = (q1minpos,q1maxpos)
+q2coord = (q2minpos,q2maxpos)
+q3coord = (q3minpos,q3maxpos)
+q4coord = (q4minpos,q4maxpos)
+qlist = [q1coord,q2coord,q3coord,q4coord]
+attr = {}
+attr['index'] = None
+attr['postree'] = None
+attr['quadrant'] = None
+ptreedict = {}##poslookuptree[mmcoord]['postree']
+i = 0
+for q in qlist:
+    attr['quadrant'] = i
+    ptreedict[q] = attr.copy()
+    i += 1
+    
+nodeposlistc = nodeposlist[0:len(nodeposlist)]
+del nodeposlistc[0]
+for nodepos in nodeposlistc:
+    minmaxcoordlist = []
+    parent, quad, minmaxcoordlist = findparent(nodepos, ptreedict,
+                                               minmaxcoordlist)
+    print('minmaxcoordlist', minmaxcoordlist)
+    minmaxcoordlistc = minmaxcoordlist[0:len(minmaxcoordlist)]
+    setparent(nodepos, ptreedict, minmaxcoordlistc)
 
