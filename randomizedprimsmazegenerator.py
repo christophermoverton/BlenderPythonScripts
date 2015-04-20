@@ -1,8 +1,8 @@
 import random
 global dimx
 global dimy
-dimx = 100
-dimy = 100
+dimx = 10
+dimy = 10
 nodes = {}
 ## Nodes are keyed by coordinate tuple position (x,y)
 ## dictionary values are neighboring position tuples
@@ -85,3 +85,63 @@ while (len(walls) > 0):
         del walls[wind]
     else:
         del walls[wind]
+
+wallsize = .5 ## thickness
+cellsize = 1.0 ## or NxN
+
+##build vertices
+## for each cell there is a passage of wallsize in 4 possible directions
+## start left exterior wall of the maze
+vertices = []
+faces = []
+mwalls = []
+tramt = (0,0)
+for y in range(0,dimy):
+    ##local coordinates for 1rstwall section exceptions case
+    verticesind = []
+    if tramt[0] == 0 and tramt[1] == 0:
+        vert1 = (0.0,0.0,0.0)
+        vert2 = (0.0,wallsize,0.0)
+        vert3 = (wallsize,wallsize,0.0)
+        vert4 = (wallsize,0.0,0.0)
+        for vert in [vert1,vert2,vert3,vert4]:
+            vert = (vert[0]+tramt[0],vert[1] + tramt[1],vert[2])
+            vertices.append(vert)
+            verticesind.append(len(vertices)-1)
+        
+        faces.append(verticesind)
+        mwalls.append(verticesind)
+        verticesind = []
+        tramt = (tramt[0],tramt[1]+wallsize)
+    #local coordinates for 2nd wall section
+    vert5 = (0.0,0.0,0.0)
+    vert6 = (0.0,cellsize,0.0)
+    vert7 = (wallsize,cellsize,0.0)
+    vert8 = (wallsize,0.0,0.0)
+    for vert in [vert5,vert6,vert7,vert8]:
+        vert = (vert[0]+tramt[0],vert[1] + tramt[1],vert[2])
+        vertices.append(vert)
+        verticesind.append(len(vertices)-1)
+    faces.append(verticesind)
+    mwalls.append(verticesind)
+    verticesind = []
+    tramt = (tramt[0],tramt[1]+cellsize)
+    #local coordinates for 3rd wall section
+    vert1 = (0.0,0.0,0.0)
+    vert2 = (0.0,wallsize,0.0)
+    vert3 = (wallsize,wallsize,0.0)
+    vert4 = (wallsize,0.0,0.0)
+    for vert in [vert1,vert2,vert3,vert4]:
+        vert = (vert[0]+tramt[0],vert[1] + tramt[1],vert[2])
+        vertices.append(vert)
+        verticesind.append(len(vertices)-1)
+    
+    faces.append(verticesind)
+    mwalls.append(verticesind)
+    verticesind = []
+    tramt = (tramt[0],tramt[1]+wallsize)
+
+##finished left exterior wall now we iterate building the maze
+## tracking walls vertices for selection and later procedural extrusion
+##increment tramt by wallsize for the new translation amount
+
