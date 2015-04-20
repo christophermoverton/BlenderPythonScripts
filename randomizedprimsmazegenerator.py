@@ -1,8 +1,18 @@
 import random
+import bpy
 global dimx
 global dimy
 dimx = 10
 dimy = 10
+meshName = "PrimsMaze"
+obName = "PrimsMazeObj"
+me = bpy.data.meshes.new(meshName)
+ob = bpy.data.objects.new(obName, me)
+ob.location = bpy.context.scene.cursor_location
+bpy.context.scene.objects.link(ob)
+scn = bpy.context.scene
+scn.objects.active = ob
+ob.select = True
 nodes = {}
 ## Nodes are keyed by coordinate tuple position (x,y)
 ## dictionary values are neighboring position tuples
@@ -95,6 +105,7 @@ cellsize = 1.0 ## or NxN
 vertices = []
 faces = []
 mwalls = []
+mwallsfaces = []
 tramt = (0,0)
 for y in range(0,dimy):
     ##local coordinates for 1rstwall section exceptions case
@@ -109,8 +120,9 @@ for y in range(0,dimy):
             vertices.append(vert)
             verticesind.append(len(vertices)-1)
         
-        faces.append(verticesind)
-        mwalls.append(verticesind)
+        faces.append(tuple(verticesind))
+        mwalls.append(tuple(verticesind))
+        mwallsfaces.append(len(faces)-1)
         verticesind = []
         tramt = (tramt[0],tramt[1]+wallsize)
     #local coordinates for 2nd wall section
@@ -122,8 +134,9 @@ for y in range(0,dimy):
         vert = (vert[0]+tramt[0],vert[1] + tramt[1],vert[2])
         vertices.append(vert)
         verticesind.append(len(vertices)-1)
-    faces.append(verticesind)
-    mwalls.append(verticesind)
+    faces.append(tuple(verticesind))
+    mwalls.append(tuple(verticesind))
+    mwallsfaces.append(len(faces)-1)
     verticesind = []
     tramt = (tramt[0],tramt[1]+cellsize)
     #local coordinates for 3rd wall section
@@ -136,12 +149,144 @@ for y in range(0,dimy):
         vertices.append(vert)
         verticesind.append(len(vertices)-1)
     
-    faces.append(verticesind)
-    mwalls.append(verticesind)
+    faces.append(tuple(verticesind))
+    mwalls.append(tuple(verticesind))
+    mwallsfaces.append(len(faces)-1)
     verticesind = []
     tramt = (tramt[0],tramt[1]+wallsize)
 
 ##finished left exterior wall now we iterate building the maze
 ## tracking walls vertices for selection and later procedural extrusion
 ##increment tramt by wallsize for the new translation amount
+tramt = (tramt[0]+wallsize, 0)
+tramtystart = tramt
+for x in range(0,dimx):
+    ystart = True
+    tramt = tramtystart
+    for y in range(0,dimy):
+        tr2 = (tramt[0]+cellsize, tramt[1])
+        ##local coordinates for 1rstwall section exceptions case
+        verticesind = []
+        if ystart:
+            vert1 = (0.0,0.0,0.0)
+            vert2 = (0.0,wallsize,0.0)
+            vert3 = (cellsize,wallsize,0.0)
+            vert4 = (cellsize,0.0,0.0)
+            for vert in [vert1,vert2,vert3,vert4]:
+                vert = (vert[0]+tramt[0],vert[1] + tramt[1],vert[2])
+                vertices.append(vert)
+                verticesind.append(len(vertices)-1)
+            
+            faces.append(tuple(verticesind))
+            mwalls.append(tuple(verticesind))
+            mwallsfaces.append(len(faces)-1)
+            verticesind = []
+            tramt = (tramt[0],tramt[1]+wallsize)
 
+            vert1 = (0.0,0.0,0.0)
+            vert2 = (0.0,wallsize,0.0)
+            vert3 = (wallsize,wallsize,0.0)
+            vert4 = (wallsize,0.0,0.0)
+            for vert in [vert1,vert2,vert3,vert4]:
+                vert = (vert[0]+tr2[0],vert[1] + tr2[1],vert[2])
+                vertices.append(vert)
+                verticesind.append(len(vertices)-1)
+            
+            faces.append(tuple(verticesind))
+            mwalls.append(tuple(verticesind))
+            mwallsfaces.append(len(faces)-1)
+            verticesind = []
+            tr2 = (tr2[0],tr2[1]+wallsize)
+            ystart = False
+        #local coordinates for 2nd wall section
+        vert5 = (0.0,0.0,0.0)
+        vert6 = (0.0,cellsize,0.0)
+        vert7 = (cellsize,cellsize,0.0)
+        vert8 = (cellsize,0.0,0.0)
+        for vert in [vert5,vert6,vert7,vert8]:
+            vert = (vert[0]+tramt[0],vert[1] + tramt[1],vert[2])
+            vertices.append(vert)
+            verticesind.append(len(vertices)-1)
+        faces.append(tuple(verticesind))
+        ##mwalls.append(verticesind)
+        verticesind = []
+        tramt = (tramt[0],tramt[1]+cellsize)
+        vert5 = (0.0,0.0,0.0)
+        vert6 = (0.0,cellsize,0.0)
+        vert7 = (wallsize,cellsize,0.0)
+        vert8 = (wallsize,0.0,0.0)
+        for vert in [vert5,vert6,vert7,vert8]:
+            vert = (vert[0]+tr2[0],vert[1] + tr2[1],vert[2])
+            vertices.append(vert)
+            verticesind.append(len(vertices)-1)
+        faces.append(tuple(verticesind))
+        ## check the wall to see if it is a pasage or not
+        wallchk = nodes[(x,y)]['wright']['closed']
+        if wallchk:
+            mwalls.append(tuple(verticesind))
+            mwallsfaces.append(len(faces)-1)
+        verticesind = []
+        tr2 = (tr2[0],tr2[1]+cellsize)
+        #local coordinates for 3rd wall section
+        vert1 = (0.0,0.0,0.0)
+        vert2 = (0.0,wallsize,0.0)
+        vert3 = (cellsize,wallsize,0.0)
+        vert4 = (cellsize,0.0,0.0)
+        for vert in [vert1,vert2,vert3,vert4]:
+            vert = (vert[0]+tramt[0],vert[1] + tramt[1],vert[2])
+            vertices.append(vert)
+            verticesind.append(len(vertices)-1)
+        
+        faces.append(tuple(verticesind))
+        wallchk = nodes[(x,y)]['wup']['closed']
+        if wallchk:
+            mwalls.append(tuple(verticesind))
+            mwallsfaces.append(len(faces)-1)
+        verticesind = []
+        tramt = (tramt[0],tramt[1]+wallsize)
+        vert1 = (0.0,0.0,0.0)
+        vert2 = (0.0,wallsize,0.0)
+        vert3 = (wallsize,wallsize,0.0)
+        vert4 = (wallsize,0.0,0.0)
+        for vert in [vert1,vert2,vert3,vert4]:
+            vert = (vert[0]+tr2[0],vert[1] + tr2[1],vert[2])
+            vertices.append(vert)
+            verticesind.append(len(vertices)-1)
+        
+        faces.append(tuple(verticesind))
+        mwalls.append(tuple(verticesind))
+        mwallsfaces.append(len(faces)-1)
+        verticesind = []
+        ##tramt = (tramt[0],tramt[1]+wallsize)
+    tramtystart = (tramtystart[0]+cellsize+wallsize, tramtystart[1])
+    ystart = True
+
+## finished with vertices, faces, and selection walls
+me.from_pydata(vertices,[],faces)      
+me.update(calc_edges=True)
+ob.select = True
+##bpy.ops.object.mode_set(mode = 'OBJECT')
+obj = bpy.context.active_object
+
+bpy.ops.object.mode_set(mode = 'EDIT')
+bpy.ops.mesh.select_all(action = 'DESELECT')
+   # reselect the originally selected face
+bpy.ops.object.mode_set(mode = 'OBJECT')
+for face in mwallsfaces:
+   ob.data.polygons[face].select = True
+
+bpy.ops.object.mode_set(mode = 'EDIT')
+bpy.ops.mesh.extrude_faces_move(
+    MESH_OT_extrude_faces_indiv={"mirror":True}, 
+    TRANSFORM_OT_shrink_fatten={"value":cellsize,
+    "mirror":False,
+    "proportional":'DISABLED',
+    "proportional_edit_falloff":'SMOOTH',
+    "proportional_size":1,
+    "snap":False,
+    "snap_target":'CLOSEST',
+    "snap_point":(0, 0, 0),
+    "snap_align":False,
+    "snap_normal":(0, 0, 0),
+    "release_confirm":False})
+obj.data.update()
