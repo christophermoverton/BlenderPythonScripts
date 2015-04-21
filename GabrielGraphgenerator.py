@@ -149,3 +149,5 @@ for x in range(0,dimx):
 ## we also need a minimally spanning distance set.
 ## In this case, we can do see by examining a family of paths,
 ## the smallest set in such family yields the minimal spanning path.
+## maybe more efficient methods exist here...maybe a weighting method for
+## recusion searching a path?
