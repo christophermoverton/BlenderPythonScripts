@@ -106,6 +106,10 @@ def checkNeighbor(nodes,direction, cpos, dchecks, dirtopos):
     ## a given direction. A direction is given in one of the 8 different
     ##adjacency directions mentioned above.
     ## north
+def distance(pos,pos2):
+    posx,posy = pos
+    pos2x,pos2y = pos2
+    return ((float(posx-pos2x))**2 + (float(posy-pos2y))**2)**.5
 
 for x in range(0,dimx):
     for y in range(0,dimy):
@@ -132,22 +136,107 @@ for x in range(0,dimx):
                          y + dirtopos[direct][1])
                 nattr['cellposition'] = c2pos
                 nattr['position'] = nodes[c2pos]['position']
+                nattr['distance'] = distance(nattr['position'],(posx,posy))
                 attr['neighbors'].append(nattr)
                 currentattr = {}
                 currentattr['cellposition'] = (x,y)
                 currentattr['position'] = (posx,posy)
+                currentattr['distance'] = nattr['distance']
                 nodes[c2pos]['neighbors'].append(currentattr)
         nodes[(x,y)] = attr
 
 ## now we need to path trace from to and from a starting vertex without
 ## the trivial path that is from start to second vertex back to start
 ## That is we need build faces.  This gets trickier since we can span in
-## many different directions on the node neighbor tree.  To solve this
-## problem we might want to put a cap on the absolute distance from the
-## originating starting cell position...say maybe no more than +/- 7 units
-## on either axis or otherwise we kill the recursion search?
+## many different directions on the node neighbor tree.  
 ## we also need a minimally spanning distance set.
 ## In this case, we can do see by examining a family of paths,
 ## the smallest set in such family yields the minimal spanning path.
 ## maybe more efficient methods exist here...maybe a weighting method for
 ## recusion searching a path?
+## A path loop that we are looking for, however,
+## does have an intersting property.  Namely, at any given node if we were
+## to draw a line from one node back to the start, the edge given
+## should neither intersect with any other edge and remain interior to
+## our given polygon.  Thus we may be able to formulate an intersection test.
+## Where in our recursion process we test to see that an intersection is
+## is formed by regional neighboring edges in a given vicinity.  If so then,
+## we end the recursion search.  We may be able to also more readily rely on
+## this method given node distribution since there are likely to be simple
+##polygons.  I have seen a right turn rule being applied, but this seems
+## to suggest directionality on otherwise undirected graph.
+##   Another method uses distances weighting of a such that a minimum
+## distance is maintained in a given path tree search of a destination
+## node relative to a node or nodes in a given path.  In this case,
+## a modified form of  Dijkstra's algorithm may be a good choice.
+
+##Let the node at which we are starting be called the initial node.
+##Let the distance of node Y be the distance from the initial node to Y.
+##Dijkstra's algorithm will assign some initial distance values and
+##will try to improve them step by step.
+##
+##Assign to every node a tentative distance value:
+##set it to zero for our initial node and to infinity for all other nodes.
+##Set the initial node as current. Mark all other nodes unvisited.
+##Create a set of all the unvisited nodes called the unvisited set.
+##Step 3. For the current node, consider all of its unvisited neighbors
+##and calculate their tentative distances. Compare the newly calculated
+##tentative distance to the current assigned value and assign the
+##smaller one. For example, if the current node A is marked
+##with a distance of 6, and the edge connecting it with a neighbor B
+##has length 2, then the distance to B (through A) will be 6 + 2 = 8.
+##If B was previously marked with a distance greater than 8 then
+##change it to 8. Otherwise, keep the current value.
+##When we are done considering all of the neighbors of the current node,
+##mark the current node as visited and remove it from the unvisited set.
+##A visited node will never be checked again.
+##If the destination node has been marked visited (when planning a route
+##between two specific nodes) or if the smallest tentative distance among
+##the nodes in the unvisited set is infinity (when planning a complete
+##traversal; occurs when there is no connection between the initial node
+##and remaining unvisited nodes), then stop. The algorithm has finished.
+##Select the unvisited node that is marked with the smallest tentative
+##distance, and set it as the new "current node" then go back to step 3.
+
+## The modified form of this algorithm must consider reaching the
+## the destination node which is actually already visited.  Other
+## rules still apply.   It seems the problem is handled,
+## if tossing the trivial solution a-n and then working n to a for a 2nd
+## or 1rst shortest solution.  Another modification to the algorithm puts
+## another weight decision bias which also tests increasing distance relative
+## to an initial start node.
+
+def Dijkstra(Graph, source):
+    ##dist = {source: {'distance':0, 'index':0}}
+    dist = [(source,0)]
+    distmap = {source:0}
+    prev = [(source,None)]
+    prevmap = {source:None}
+    Q = []
+    for cell in Graph:
+        if cell != source:
+            distmap[cell] = float('inf')
+            dist.append((cell,float('inf')))
+            prevmap[cell] = None
+            prev.append((cell, None))
+        Q.append(cell)
+
+    while len(Q) > 0:
+        dist.sort(key=lambda tup: tup[1])
+        u = dist[0]
+        uind = Q.index(u[0])
+        del Q[uind]
+
+        for neighborv in Graph[u]['neighbors']:
+            alt = u[1] + neighborv['distance']
+            vcellpos = neighborv['cellposition']
+            vdist = distmap[vcellpos]
+            vdistind = dist.index((vcellpos,vdist))
+            pu = prevmap[vcellpos]
+            vprevind = prev.index((vcellpos,pu))
+            if alt < vdist:
+                dist[vdistind] = (vcellpos,alt)
+                distmap[vcellpos] = alt
+                prev[vprevind] = (vcellpos,u)
+                prevmap[vcellpos] = u
+
