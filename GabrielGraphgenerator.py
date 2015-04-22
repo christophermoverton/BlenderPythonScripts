@@ -232,7 +232,55 @@ for x in range(0,dimx):
 ## the opposite case, on the else exception again for a non-infinity
 ## failed assignment change.
 print(nodes[(0,0)])
-def Dijkstramodified(Graph, source):
+def Dijkstramodified(Graph, source, target):
+    def addlistval(currentnode, nextnode, Paths):
+##        if currentnode in Paths:
+        for path in Paths[currentnode]:
+            newpath = path[0:len(path)]
+            newpath.append(nextnode)
+            if nextnode in Paths:
+                if not newpath in Paths[nextnode]:
+                    Paths[nextnode].append(newpath)
+            else:
+                Paths[nextnode] = [newpath]
+##        else:
+##            newpath = [currentnode]
+##            Paths[currentnode] = [newpath]
+
+    def checkminCycle(nextnode, Paths):
+        cycle = {}
+        found = False
+        if len(Paths[nextnode]) <= 1:
+            return False, None
+        else:
+            minval = float('inf')
+            i = 0
+            for path in Paths[nextnode]:
+                setpath = path[0:len(path)]
+                setpath.sort(reverse = True)
+                copypaths = Paths[nextnode][0:len(Paths[nextnode])]
+                del copypaths[i]
+                for path2 in copypaths:
+                    path2copy = path2[0:len(path2)]
+                    path2copy.sort(reverse = True)
+                    j = 0
+                    for pathval in path2copy:
+                        if j == 0:
+                            continue
+                        if pathval in setpath:
+                            if setpath.index(pathval) < minval:
+                                minval = setpath.index(pathval)
+                                minval2 = path2copy.index(pathval)
+                                cycle = {(minval, minval2):[tuple(setpath),
+                                                            tuple(path2copy)]}
+                                found = True
+                                break
+                        j += 1
+                i += 1
+            if found:
+                return True, cycle
+            else:
+                return False, None
     ## we modify target so that the solution
     ## source -target path is disallowed 
     ##dist = {source: {'distance':0, 'index':0}}
@@ -241,6 +289,9 @@ def Dijkstramodified(Graph, source):
     prev = [(source,None)]
     prevmap = {source:None}
     Bridgepairs = [] ## celladdressing pair tuple
+    Paths = {}
+    Paths[source] = [[source]]
+    Cycles = {}
     Q = []
     for cell in Graph:
         if cell != source:
@@ -249,18 +300,28 @@ def Dijkstramodified(Graph, source):
             prevmap[cell] = None
             prev.append((cell, None))
         Q.append(cell)
+    previouscell = None
+    skip = None
     while len(Q) > 0:
         dist.sort(key=lambda tup: tup[1])
         mindist = 0
         i = 0
+        
         for d in dist:
-            if d[0] in Q:
+            if d[0] in Q and skip != d[0]:
                 mindist = i
                 break
             i += 1
         u = dist[mindist]
-        
+        print(u[0])
         uind = Q.index(u[0])
+        t1 = u[0] == target
+        t2 = prevmap[u[0]] != None
+        if t1 and t2:
+            break
+        elif t1 and not t2:
+            skip = target
+            continue
         del Q[uind]
 
         for neighborv in Graph[u[0]]['neighbors']:
@@ -268,10 +329,21 @@ def Dijkstramodified(Graph, source):
             vcellpos = neighborv['cellposition']
             if not vcellpos in Q:
                 continue
+            t1 = u[0] == source
+            t2 = vcellpos == target
+            print('u[0]', u[0])
+            print('vcellpos:', vcellpos)
+            if t1 and t2:
+                continue
+            if not t1 and t2:
+                if skip == target:
+                    skip = None
             vdist = distmap[vcellpos]
             vdistind = dist.index((vcellpos,vdist))
             pu = prevmap[vcellpos]
             vprevind = prev.index((vcellpos,pu))
+            ##cyclecheck, cycle = checkminCycle(vcellpos, Paths)
+
             if alt < vdist:
                 if vdist != float('inf'):
                     Bridgepairs.append((vcellpos,u[0]))
@@ -279,51 +351,59 @@ def Dijkstramodified(Graph, source):
                 distmap[vcellpos] = alt
                 prev[vprevind] = (vcellpos,u)
                 prevmap[vcellpos] = u
+##                addlistval(u[0], vcellpos, Paths)
+##                cyclecheck, cycle = checkminCycle(vcellpos, Paths)
+##                if cyclecheck:
+##                    for c in cycle:
+##                        Cycles[tuple(cycle[c])] = c
             elif alt > vdist:
                 if vdist != float('inf'):
-                    Bridgepairs.append((vcellpos,u[0]))                
-    return dist, distmap, prev, prevmap, Bridgepairs
+                    Bridgepairs.append((vcellpos,u[0]))
+        previouscell = u[0]
+                    
+    return dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths
 
-dist, distmap, prev, prevmap, Bridgepairs = Dijkstramodified(nodes, (0,0))
+##dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(nodes,(0,0))
+dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(nodes,(0,0),(1,0))
 ## now to build polygons
-commonnode = False
-faces = []
-for bridgepair in Bridgepairs:
-    commonnode = False
-    face = [bridgepair[0], bridgepair[1]]
-    currentnode1 = bridgepair[0]
-    currentnode2 = bridgepair[1]
-    while not commonnode:
-        ## move current currentnode1 back 1 step in path iteration
-        nextnode1 = None
-        nextnode2 = None
-        if prevmap[currentnode1] != None:
-            nextnode1 = prevmap[currentnode1][0]
-            if not nextnode1 in face:
-                face.append(nextnode1)
-            else:
-                commonnode = True
-            currentnode1 = nextnode1
-        else:
-            currentnode1 = currentnode1
-            commonnode = True
-        if prevmap[currentnode1] != None:    
-            nextnode2 = prevmap[currentnode2][0]
-            if not nextnode2 in face:
-                face.append(nextnode2)
-            else:
-                commonnode = True
-            currentnode2 = nextnode2
-        else:
-            currentnode2 = currentnode2
-        potentialbr1 = (nextnode1, nextnode2)
-        potentialbr2 = (nextnode2, nextnode1)
-        t1 = potentialbr1 in Bridgepairs
-        t2 = potentialbr2 in Bridgepairs
-        if t1 or t2:
-            commonnode = True
-        print(face)    
-    faces.append(face)
+##commonnode = False
+##faces = []
+##for bridgepair in Bridgepairs:
+##    commonnode = False
+##    face = [bridgepair[0], bridgepair[1]]
+##    currentnode1 = bridgepair[0]
+##    currentnode2 = bridgepair[1]
+##    while not commonnode:
+##        ## move current currentnode1 back 1 step in path iteration
+##        nextnode1 = None
+##        nextnode2 = None
+##        if prevmap[currentnode1] != None:
+##            nextnode1 = prevmap[currentnode1][0]
+##            if not nextnode1 in face:
+##                face.append(nextnode1)
+##            else:
+##                commonnode = True
+##            currentnode1 = nextnode1
+##        else:
+##            currentnode1 = currentnode1
+##            commonnode = True
+##        if prevmap[currentnode1] != None:    
+##            nextnode2 = prevmap[currentnode2][0]
+##            if not nextnode2 in face:
+##                face.append(nextnode2)
+##            else:
+##                commonnode = True
+##            currentnode2 = nextnode2
+##        else:
+##            currentnode2 = currentnode2
+##        potentialbr1 = (nextnode1, nextnode2)
+##        potentialbr2 = (nextnode2, nextnode1)
+##        t1 = potentialbr1 in Bridgepairs
+##        t2 = potentialbr2 in Bridgepairs
+##        if t1 or t2:
+##            commonnode = True
+##        ##print(face)    
+##    faces.append(face)
 
 
 ## Technically incorrect results.  It would appear this method doesn't work
@@ -339,8 +419,25 @@ for bridgepair in Bridgepairs:
 ##This may work, however, for subgraphs,
 ## or subset definted Q supplied to the method.
 
-## Dijkstra's algorithm works well, however, in its distance expansion method.
-## I think I may instead look at incorporating a tree with node to tree
-## key list system here.  For instance, forming polygons where a common
-## node branch split leads to a re merging branch at another common node
-## intersection while applying this to the Dijkstra's algorithm.
+##At the moment added several methods to the Dijkstra method, one to check
+## trace node paths in reverse, but similar issue as in above, and secondly
+## given directionality of a source node influnencing the outcome of minimal
+##spanning tree, it is not always a given that a node to source path, has
+## at a given node a cycle in the path history.  Deviation in roots, for
+##instance, with horizontal banding paths are not garuanteed to yield
+##cycles (with quasi linear paths).  Same problem as above.
+## So I've attempted another method which includes a target intercept, and
+##then having used a source target where both such nodes are neighbors,
+##but disallowing path tracing including this minimal spanning path.  Instead
+## I look for the next source to target spanning path on such neighbors, which
+## should yield a cycle.  Now technically for such edge defined by source
+##target there should be two such alternate minimal spanning paths, where
+## one is ranked less minimal relative the other.  To solve this problem,
+## then having solved the first order rank, means adjusting Q in not allowing
+## the 1rst cycle set.  So each source target set should be run at least twice,
+## including a compliment of G intersect 1rst cycle set.  Added to this to
+##prevent reiterations, one includes all previously computed cycles, when
+## updating to new source target node set.  Preliminary testing seems to
+## to indicate the Dijkstra method works above with source target combination
+## I haven't adjusted this with a modified cycles set inclusions
+## for a compliment on the graph.
