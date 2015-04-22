@@ -214,23 +214,24 @@ for x in range(0,dimx):
 ## bridge is defined as node with allocated distance relative to both
 ## a source and another common node point, and there are two such
 ## bridge points that complete the ring of a polygon.
-## A bridge point is referenced by its node distance addressing (or
-## minimum tentative distance), Two brige points occur where
-## sequentially the distance between two shared bridge points (having
-## an edge) do not add to the other bridges allocated distance address,
-## and that one bridge point is equal to or less in terms of its
+## A bridge node is referenced by its node distance addressing (or
+## minimum tentative distance), Two brige nodes occur where
+## sequentially the distance between two shared bridge node pairs (having
+## an edge between the two) do not add to the other bridges
+## allocated distance address, (using t-distance as tentative distance)
+## and that one bridge node t-distance is equal to or less in terms of its
 ## distance allocation relative the other bridge + the distance between
-## both such points.  From both such bridge points we can trace 3 distinct
+## both such nodes.  From both such bridge points we can trace 3 distinct
 ## paths back along the
 ## path of the polygon back to the root of the ring (or a common node).
-## A modified form of the function below marks the bridge points.
+## A modified form of the function below marks the bridge nodes.
 ## This occurs for instance, at the control instance of the function checking
 ## to verify alt < vdist (as shown below).  Whenever a non-infinity reassignment
 ## is done then we know that a node neighbor's previous allocation is
 ## a bridge, for instance, relative the other.  We'd also need consider
 ## the opposite case, on the else exception again for a non-infinity
 ## failed assignment change.
-
+print(nodes[(0,0)])
 def Dijkstramodified(Graph, source):
     ## we modify target so that the solution
     ## source -target path is disallowed 
@@ -239,6 +240,7 @@ def Dijkstramodified(Graph, source):
     distmap = {source:0}
     prev = [(source,None)]
     prevmap = {source:None}
+    Bridgepairs = [] ## celladdressing pair tuple
     Q = []
     for cell in Graph:
         if cell != source:
@@ -249,12 +251,19 @@ def Dijkstramodified(Graph, source):
         Q.append(cell)
     while len(Q) > 0:
         dist.sort(key=lambda tup: tup[1])
-        u = dist[0]
+        mindist = 0
+        i = 0
+        for d in dist:
+            if d[0] in Q:
+                mindist = i
+                break
+            i += 1
+        u = dist[mindist]
         
         uind = Q.index(u[0])
         del Q[uind]
 
-        for neighborv in Graph[u]['neighbors']:
+        for neighborv in Graph[u[0]]['neighbors']:
             alt = u[1] + neighborv['distance']
             vcellpos = neighborv['cellposition']
             vdist = distmap[vcellpos]
@@ -262,8 +271,15 @@ def Dijkstramodified(Graph, source):
             pu = prevmap[vcellpos]
             vprevind = prev.index((vcellpos,pu))
             if alt < vdist:
+                if vdist != float('inf'):
+                    Bridgepairs.append((vcellpos,u[0]))
                 dist[vdistind] = (vcellpos,alt)
                 distmap[vcellpos] = alt
                 prev[vprevind] = (vcellpos,u)
                 prevmap[vcellpos] = u
+            elif alt > vdist:
+                if vdist != float('inf'):
+                    Bridgepairs.append((vcellpos,u[0]))                
+    return dist, distmap, prev, prevmap, Bridgepairs
 
+dist, distmap, prev, prevmap, Bridgepairs = Dijkstramodified(nodes, (0,0))
