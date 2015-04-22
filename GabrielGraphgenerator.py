@@ -421,7 +421,7 @@ dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(node
 
 ##At the moment added several methods to the Dijkstra method, one to check
 ## trace node paths in reverse, but similar issue as in above, and secondly
-## given directionality of a source node influnencing the outcome of minimal
+## given directionality of a source node influencing the outcome of minimal
 ##spanning tree, it is not always a given that a node to source path, has
 ## at a given node a cycle in the path history.  Deviation in roots, for
 ##instance, with horizontal banding paths are not garuanteed to yield
@@ -431,7 +431,7 @@ dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(node
 ##but disallowing path tracing including this minimal spanning path.  Instead
 ## I look for the next source to target spanning path on such neighbors, which
 ## should yield a cycle.  Now technically for such edge defined by source
-##target there should be two such alternate minimal spanning paths, where
+##target there should be possibly two such alternate minimal spanning paths, where
 ## one is ranked less minimal relative the other.  To solve this problem,
 ## then having solved the first order rank, means adjusting Q in not allowing
 ## the 1rst cycle set.  So each source target set should be run at least twice,
