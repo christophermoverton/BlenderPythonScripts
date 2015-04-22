@@ -266,6 +266,8 @@ def Dijkstramodified(Graph, source):
         for neighborv in Graph[u[0]]['neighbors']:
             alt = u[1] + neighborv['distance']
             vcellpos = neighborv['cellposition']
+            if not vcellpos in Q:
+                continue
             vdist = distmap[vcellpos]
             vdistind = dist.index((vcellpos,vdist))
             pu = prevmap[vcellpos]
@@ -283,3 +285,5 @@ def Dijkstramodified(Graph, source):
     return dist, distmap, prev, prevmap, Bridgepairs
 
 dist, distmap, prev, prevmap, Bridgepairs = Dijkstramodified(nodes, (0,0))
+## now to build polygons
+
