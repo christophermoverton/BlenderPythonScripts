@@ -286,4 +286,61 @@ def Dijkstramodified(Graph, source):
 
 dist, distmap, prev, prevmap, Bridgepairs = Dijkstramodified(nodes, (0,0))
 ## now to build polygons
+commonnode = False
+faces = []
+for bridgepair in Bridgepairs:
+    commonnode = False
+    face = [bridgepair[0], bridgepair[1]]
+    currentnode1 = bridgepair[0]
+    currentnode2 = bridgepair[1]
+    while not commonnode:
+        ## move current currentnode1 back 1 step in path iteration
+        nextnode1 = None
+        nextnode2 = None
+        if prevmap[currentnode1] != None:
+            nextnode1 = prevmap[currentnode1][0]
+            if not nextnode1 in face:
+                face.append(nextnode1)
+            else:
+                commonnode = True
+            currentnode1 = nextnode1
+        else:
+            currentnode1 = currentnode1
+            commonnode = True
+        if prevmap[currentnode1] != None:    
+            nextnode2 = prevmap[currentnode2][0]
+            if not nextnode2 in face:
+                face.append(nextnode2)
+            else:
+                commonnode = True
+            currentnode2 = nextnode2
+        else:
+            currentnode2 = currentnode2
+        potentialbr1 = (nextnode1, nextnode2)
+        potentialbr2 = (nextnode2, nextnode1)
+        t1 = potentialbr1 in Bridgepairs
+        t2 = potentialbr2 in Bridgepairs
+        if t1 or t2:
+            commonnode = True
+        print(face)    
+    faces.append(face)
 
+
+## Technically incorrect results.  It would appear this method doesn't work
+## well for large scale general graph.  The reason being I suspect is
+##that directed
+## paths are given in non cyclic orientations excepting more likely intersecting
+## occurence around a given source point.  Consider the example of
+## two quasi semi linear lines that never technically meet expanding out
+## from a given source node.  In between we should find potentially on such
+## graph possible intersecting lines that complete rings/cycles on the graph,
+## but one source point from directed path construction is not enough in
+## finding these.
+##This may work, however, for subgraphs,
+## or subset definted Q supplied to the method.
+
+## Dijkstra's algorithm works well, however, in its distance expansion method.
+## I think I may instead look at incorporating a tree with node to tree
+## key list system here.  For instance, forming polygons where a common
+## node branch split leads to a re merging branch at another common node
+## intersection while applying this to the Dijkstra's algorithm.
