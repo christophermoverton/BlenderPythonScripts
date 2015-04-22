@@ -441,3 +441,7 @@ dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(node
 ## to indicate the Dijkstra method works above with source target combination
 ## I haven't adjusted this with a modified cycles set inclusions
 ## for a compliment on the graph.
+## For a source target test whether or not we run two or one iteration, we
+## run a neighbor test on both source and target, if there is a two branch
+##split on either node then we run a two iteration source target run, otherwise
+## a single run is sufficient on such edge.
