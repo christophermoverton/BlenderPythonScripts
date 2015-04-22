@@ -206,7 +206,34 @@ for x in range(0,dimx):
 ## another weight decision bias which also tests increasing distance relative
 ## to an initial start node.
 
-def Dijkstra(Graph, source):
+## Revision: sweep the set of nodes of the graph generating a distance
+## trace map (indicated as prev in algorithm), this is basically by the way
+## creating with Dijkstra algorithm a directed graph.
+## I will refer to a cycle (or polygon) in this context as a ring.
+## We can tell that a node point forms the bridge of a ring, where
+## bridge is defined as node with allocated distance relative to both
+## a source and another common node point, and there are two such
+## bridge points that complete the ring of a polygon.
+## A bridge point is referenced by its node distance addressing (or
+## minimum tentative distance), Two brige points occur where
+## sequentially the distance between two shared bridge points (having
+## an edge) do not add to the other bridges allocated distance address,
+## and that one bridge point is equal to or less in terms of its
+## distance allocation relative the other bridge + the distance between
+## both such points.  From both such bridge points we can trace 3 distinct
+## paths back along the
+## path of the polygon back to the root of the ring (or a common node).
+## A modified form of the function below marks the bridge points.
+## This occurs for instance, at the control instance of the function checking
+## to verify alt < vdist (as shown below).  Whenever a non-infinity reassignment
+## is done then we know that a node neighbor's previous allocation is
+## a bridge, for instance, relative the other.  We'd also need consider
+## the opposite case, on the else exception again for a non-infinity
+## failed assignment change.
+
+def Dijkstramodified(Graph, source):
+    ## we modify target so that the solution
+    ## source -target path is disallowed 
     ##dist = {source: {'distance':0, 'index':0}}
     dist = [(source,0)]
     distmap = {source:0}
@@ -220,10 +247,10 @@ def Dijkstra(Graph, source):
             prevmap[cell] = None
             prev.append((cell, None))
         Q.append(cell)
-
     while len(Q) > 0:
         dist.sort(key=lambda tup: tup[1])
         u = dist[0]
+        
         uind = Q.index(u[0])
         del Q[uind]
 
