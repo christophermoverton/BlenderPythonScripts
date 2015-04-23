@@ -313,7 +313,7 @@ def Dijkstramodified(Graph, source, target):
                 break
             i += 1
         u = dist[mindist]
-        print(u[0])
+        ##print(u[0])
         uind = Q.index(u[0])
         t1 = u[0] == target
         t2 = prevmap[u[0]] != None
@@ -331,8 +331,8 @@ def Dijkstramodified(Graph, source, target):
                 continue
             t1 = u[0] == source
             t2 = vcellpos == target
-            print('u[0]', u[0])
-            print('vcellpos:', vcellpos)
+            ##print('u[0]', u[0])
+            ##print('vcellpos:', vcellpos)
             if t1 and t2:
                 continue
             if not t1 and t2:
@@ -361,10 +361,42 @@ def Dijkstramodified(Graph, source, target):
                     Bridgepairs.append((vcellpos,u[0]))
         previouscell = u[0]
                     
-    return dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths
+    return dist, distmap, prev, prevmap
 
 ##dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(nodes,(0,0))
-dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(nodes,(0,0),(1,0))
+Cycles = {}
+for x in range(0,dimx):
+    for y in range(0,dimy):
+        maxx = 0
+        maxy = 0
+        nextnode = None
+        nposlist = []
+        for neighbor in nodes[(x,y)]['neighbors']:
+            npos = neighbor['cellposition']
+            nposlist.append(npos)
+        nposlist.sort(key = lambda tup:tup[1], reverse=True)
+        nposlist2 = [nposlist[0]]
+        ymax = nposlist[0][1]
+        nposlist = nposlist[1:len(nposlist)]
+        for npos in nposlist:
+            if npos[1] == ymax:
+                nposlist2.append(npos)
+        nposlist2.sort(key = lambda tup:tup[0])
+        # choosing the ymax and xmin neighbor node
+        nextnode = nposlist2[0]
+        dist, distmap, prev, prevmap = Dijkstramodified(nodes,(x,y),nextnode)
+        newNode = None
+        currentNode = nextnode
+        cycle = []
+        while newNode != (x,y):
+            cycle.append(prevmap[currentNode][0])
+            newNode = prevmap[currentNode][0]
+            if newNode == currentNode:
+                break
+            ##print(newNode)
+            ##print(currentNode)
+            currentNode = newNode
+            Cycles[((x,y), nextnode)] = cycle
 ## now to build polygons
 ##commonnode = False
 ##faces = []
