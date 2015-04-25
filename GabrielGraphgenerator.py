@@ -238,7 +238,7 @@ for x in range(0,dimx):
 ## the opposite case, on the else exception again for a non-infinity
 ## failed assignment change.
 print(nodes[(0,0)])
-def Dijkstramodified(Graph, source, target):
+def Dijkstramodified(Graph, source, target, exclusion):
     def addlistval(currentnode, nextnode, Paths):
 ##        if currentnode in Paths:
         for path in Paths[currentnode]:
@@ -329,8 +329,10 @@ def Dijkstramodified(Graph, source, target):
 ##            elif cell[0] >= source[0] and cell[0] <= target[0]:
 ##                t3 = cell[1] > source[1]
 ##                if t3:
-##                    continue            
-       
+##                    continue
+        if cell in exclusion:
+            continue
+        
         Q.append(cell)
     previouscell = None
     skip = None
@@ -400,6 +402,44 @@ def Dijkstramodified(Graph, source, target):
     return dist, distmap, prev, prevmap
 
 ##dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(nodes,(0,0))
+def addexclusions(nodepair, exclusions, Graph, cycle):
+    ##assumed nodepair provided in proper source target ordering
+    currentcell = nodepair[1]
+    cposx, cposy = Graph[currentcell]['position']
+    for cell in cycle:
+        cellx,celly = Graph[cell]['position']
+        if cposy > celly:
+            order = (cell, currentcell)
+        else:
+            order = (currentcell, cell)
+        ## order cell, currentcell
+        cellind = cycle.index(cell)
+        if cellind != 0:
+            npos = cycle[cellind-1]
+            nposx,nposy = Graph[npos]['position']
+            if nposx >= cposx and nposx <= cellx:
+                if order in exclusions:
+                    if not npos in list(order):
+                        exclusions[order].append(npos)
+                else:
+                    if not npos in list(order):
+                        exclusions[order] = [npos]
+        if cellind != len(cycle)-1:
+            npos = cycle[cellind+1]
+            nposx,nposy = Graph[npos]['position']
+            if nposx >= cposx and nposx <= cellx:
+                if order in exclusions:
+                    exclusions[order].append(npos)
+                else:
+                    exclusions[order] = [npos]
+        currentcell = cell
+
+def getexclusions(nodepair, exclusions):
+    if nodepair in exclusions:
+        return exclusions[nodepair]
+    else:
+        return None
+exclusions = {}    
 Cycles = {}
 for x in range(0,dimx):
     for y in range(0,dimy):
@@ -421,8 +461,11 @@ for x in range(0,dimx):
         # choosing the ymax and xmin neighbor node
         for nextnode in nposlist2:
         ##nextnode = nposlist2[0]
+            excs = getexclusions( ((x,y), nextnode), exclusions)
+            if excs == None:
+                excs = []
             dist, distmap, prev, prevmap = Dijkstramodified(nodes,(x,y),
-                                                            nextnode)
+                                                            nextnode, excs)
             newNode = None
             currentNode = nextnode
             cycle = []
@@ -438,6 +481,7 @@ for x in range(0,dimx):
                 ##print(currentNode)
                 currentNode = newNode
             if len(cycle) != 0:
+                addexclusions(((x,y), nextnode), exclusions, nodes, cycle)
                 Cycles[((x,y), nextnode)] = cycle
 
 faces = []
