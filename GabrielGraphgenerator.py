@@ -317,7 +317,7 @@ def Dijkstramodified(Graph, source, target):
                 if t1 and t2:
                     continue
             elif cell[0] >= source[0] and cell[0] <= target[0]:
-                t3 = cell[1] < source[1]
+                t3 = cell[1] > target[1]
                 if t3:
                     continue            
        
