@@ -299,14 +299,38 @@ def Dijkstramodified(Graph, source, target):
             dist.append((cell,float('inf')))
             prevmap[cell] = None
             prev.append((cell, None))
+        t1 = target[0] <= source[0]
+        if t1:
+            if cell[0] <= target[0]:
+                t1 = cell != source
+                t2 = cell != target
+                if t1 and t2:
+                    continue
+            elif cell[0] > target[0] and cell[0] <= source[0]:
+                t3 = cell[1] < source[1]
+                if t3:
+                    continue
+        else:
+            if cell[0] < source[0]:
+                t1 = cell != source
+                t2 = cell != target
+                if t1 and t2:
+                    continue
+            elif cell[0] >= source[0] and cell[0] <= target[0]:
+                t3 = cell[1] < source[1]
+                if t3:
+                    continue            
+       
         Q.append(cell)
     previouscell = None
     skip = None
+##    print(Q)
+##    print('source: ', source)
+##    print('target: ', target)
     while len(Q) > 0:
         dist.sort(key=lambda tup: tup[1])
         mindist = 0
-        i = 0
-        
+        i = 0      
         for d in dist:
             if d[0] in Q and skip != d[0]:
                 mindist = i
@@ -314,6 +338,8 @@ def Dijkstramodified(Graph, source, target):
             i += 1
         u = dist[mindist]
         ##print(u[0])
+        if not u[0] in Q:
+            break
         uind = Q.index(u[0])
         t1 = u[0] == target
         t2 = prevmap[u[0]] != None
@@ -389,14 +415,17 @@ for x in range(0,dimx):
         currentNode = nextnode
         cycle = []
         while newNode != (x,y):
+            if prevmap[currentNode] == None:
+                break
             cycle.append(prevmap[currentNode][0])
             newNode = prevmap[currentNode][0]
             if newNode == currentNode:
                 break
+
             ##print(newNode)
             ##print(currentNode)
             currentNode = newNode
-            Cycles[((x,y), nextnode)] = cycle
+        Cycles[((x,y), nextnode)] = cycle
 ## now to build polygons
 ##commonnode = False
 ##faces = []
@@ -476,4 +505,18 @@ for x in range(0,dimx):
 ## For a source target test whether or not we run two or one iteration, we
 ## run a neighbor test on both source and target, if there is a two branch
 ##split on either node then we run a two iteration source target run, otherwise
-## a single run is sufficient on such edge.
+## a single run is sufficient on such edge.  To ensure that given branching
+## at a given node where at least 2 nodes are to share more than 1 cycle,
+## that one generates all cycles for an edge, as stated requires limiting the
+##set Q so as neither to traverse a previous path set.  The problem, however,
+## it seems with using a source target pattern where a source is also minimimal
+## to a given target using an exclusion set on Q means that path traversal
+## will take a counter clockwise rotation.  Optimally there should be some point
+## on the cycle, however, that generates the cycle even if incrementally
+## picking other source target pairs on the same cycle that are not going
+## to generate the cycle (why is this?  Lets say the cycle has already been
+## generated, then an exclusion set including previous nodes on this set,
+## ensures no path trace solution.  In other words, the path on such cycle
+## is traced at the outset of encountering the cycle but the cycle can't
+## be generated once nodes have been excepted into an exclusion set limiting
+## Q to generate the remainder for path completion.
