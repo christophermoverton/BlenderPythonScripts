@@ -1,4 +1,5 @@
 import random
+import bpy
 ## Random Gabriel Graph generator
 ## In this case applying methods similar to voronoi graph generator, or if
 ## you like you could use Delaunay Triangulation to search out the
@@ -111,6 +112,8 @@ def distance(pos,pos2):
     pos2x,pos2y = pos2
     return ((float(posx-pos2x))**2 + (float(posy-pos2y))**2)**.5
 
+i = 0
+vertices = []
 for x in range(0,dimx):
     for y in range(0,dimy):
         attr = {}
@@ -119,6 +122,7 @@ for x in range(0,dimx):
         posx = cellsize*localx+x*cellsize
         posy = cellsize*localy+y*cellsize
         attr = {'position':(posx,posy)}
+        attr['vertindex'] = i
 ##        attr['ne'] = None
 ##        attr['n'] = None
 ##        attr['nw'] = None
@@ -144,6 +148,8 @@ for x in range(0,dimx):
                 currentattr['distance'] = nattr['distance']
                 nodes[c2pos]['neighbors'].append(currentattr)
         nodes[(x,y)] = attr
+        vertices.append((posx,posy, 0.0))
+        i += 1
 
 ## now we need to path trace from to and from a starting vertex without
 ## the trivial path that is from start to second vertex back to start
@@ -293,33 +299,37 @@ def Dijkstramodified(Graph, source, target):
     Paths[source] = [[source]]
     Cycles = {}
     Q = []
+    tposx, tposy = Graph[target]['position']
+    sposx, sposy = Graph[source]['position']
     for cell in Graph:
+        cellposx,cellposy = Graph[cell]['position']
+        
         if cell != source:
             distmap[cell] = float('inf')
             dist.append((cell,float('inf')))
             prevmap[cell] = None
             prev.append((cell, None))
-        t1 = target[0] <= source[0]
+        t1 = tposx <= sposx
         if t1:
-            if cell[0] <= target[0]:
+            if cellposx <= tposx:
                 t1 = cell != source
                 t2 = cell != target
                 if t1 and t2:
                     continue
-            elif cell[0] > target[0] and cell[0] <= source[0]:
-                t3 = cell[1] < source[1]
-                if t3:
-                    continue
+##            elif cell[0] > target[0] and cell[0] <= source[0]:
+##                t3 = cell[1] < source[1]
+##                if t3:
+##                    continue
         else:
-            if cell[0] < source[0]:
+            if cellposx < sposx:
                 t1 = cell != source
                 t2 = cell != target
                 if t1 and t2:
                     continue
-            elif cell[0] >= source[0] and cell[0] <= target[0]:
-                t3 = cell[1] > target[1]
-                if t3:
-                    continue            
+##            elif cell[0] >= source[0] and cell[0] <= target[0]:
+##                t3 = cell[1] > source[1]
+##                if t3:
+##                    continue            
        
         Q.append(cell)
     previouscell = None
@@ -409,23 +419,43 @@ for x in range(0,dimx):
                 nposlist2.append(npos)
         nposlist2.sort(key = lambda tup:tup[0])
         # choosing the ymax and xmin neighbor node
-        nextnode = nposlist2[0]
-        dist, distmap, prev, prevmap = Dijkstramodified(nodes,(x,y),nextnode)
-        newNode = None
-        currentNode = nextnode
-        cycle = []
-        while newNode != (x,y):
-            if prevmap[currentNode] == None:
-                break
-            cycle.append(prevmap[currentNode][0])
-            newNode = prevmap[currentNode][0]
-            if newNode == currentNode:
-                break
+        for nextnode in nposlist2:
+        ##nextnode = nposlist2[0]
+            dist, distmap, prev, prevmap = Dijkstramodified(nodes,(x,y),
+                                                            nextnode)
+            newNode = None
+            currentNode = nextnode
+            cycle = []
+            while newNode != (x,y):
+                if prevmap[currentNode] == None:
+                    break
+                cycle.append(prevmap[currentNode][0])
+                newNode = prevmap[currentNode][0]
+                if newNode == currentNode:
+                    break
 
-            ##print(newNode)
-            ##print(currentNode)
-            currentNode = newNode
-        Cycles[((x,y), nextnode)] = cycle
+                ##print(newNode)
+                ##print(currentNode)
+                currentNode = newNode
+            if len(cycle) != 0:
+                Cycles[((x,y), nextnode)] = cycle
+
+faces = []
+for stpair in Cycles:
+    verts = []
+    verts.append(nodes[stpair[1]]['vertindex'])
+    for cell in Cycles[stpair]:
+        verts.append(nodes[cell]['vertindex'])
+    faces.append(verts)
+
+meshName = "GabrielGraph"
+obName = "GabrielGraphObj"
+me = bpy.data.meshes.new(meshName)
+ob = bpy.data.objects.new(obName, me)
+ob.location = bpy.context.scene.cursor_location
+bpy.context.scene.objects.link(ob)
+me.from_pydata(vertices,[],faces)      
+me.update(calc_edges=True)   
 ## now to build polygons
 ##commonnode = False
 ##faces = []
