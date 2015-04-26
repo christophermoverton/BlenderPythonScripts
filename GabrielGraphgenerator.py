@@ -414,24 +414,28 @@ def addexclusions(nodepair, exclusions, Graph, cycle):
             order = (currentcell, cell)
         ## order cell, currentcell
         cellind = cycle.index(cell)
-        if cellind != 0:
-            npos = cycle[cellind-1]
+##        if cellind != 0:
+        for cell2 in cycle:
+##        npos = cycle[cellind-1]
+            npos = cell2
             nposx,nposy = Graph[npos]['position']
-            if nposx >= cposx and nposx <= cellx:
-                if order in exclusions:
-                    if not npos in list(order):
-                        exclusions[order].append(npos)
-                else:
-                    if not npos in list(order):
-                        exclusions[order] = [npos]
-        if cellind != len(cycle)-1:
-            npos = cycle[cellind+1]
-            nposx,nposy = Graph[npos]['position']
-            if nposx >= cposx and nposx <= cellx:
-                if order in exclusions:
+##            if nposx >= cposx and nposx <= cellx:
+            if order in exclusions:
+                if not npos in list(order):
                     exclusions[order].append(npos)
-                else:
+            else:
+                if not npos in list(order):
                     exclusions[order] = [npos]
+##        if cellind != len(cycle)-1:
+##            npos = cycle[cellind+1]
+##            nposx,nposy = Graph[npos]['position']
+##            if nposx >= cposx and nposx <= cellx:
+##                if order in exclusions:
+##                    if not npos in list(order):
+##                        exclusions[order].append(npos)
+##                else:
+##                    if not npos in list(order):
+##                        exclusions[order] = [npos]
         currentcell = cell
 
 def getexclusions(nodepair, exclusions):
@@ -454,14 +458,21 @@ for x in range(0,dimx):
         nposlist2 = [nposlist[0]]
         ymax = nposlist[0][1]
         nposlist = nposlist[1:len(nposlist)]
+        cposx, cposy = nodes[(x,y)]['position']
         for npos in nposlist:
-            if npos[1] == ymax:
+            nposx, nposy = nodes[npos]['position']
+            if nposy >= cposy:
                 nposlist2.append(npos)
         nposlist2.sort(key = lambda tup:tup[0])
         # choosing the ymax and xmin neighbor node
         for nextnode in nposlist2:
+            nposx, nposy = nodes[nextnode]['position']
         ##nextnode = nposlist2[0]
-            excs = getexclusions( ((x,y), nextnode), exclusions)
+            if cposy <= nposy:
+                order = ((x,y),nextnode)
+            else:
+                order = (nextnode, (x,y))
+            excs = getexclusions( order, exclusions)
             if excs == None:
                 excs = []
             dist, distmap, prev, prevmap = Dijkstramodified(nodes,(x,y),
@@ -481,8 +492,8 @@ for x in range(0,dimx):
                 ##print(currentNode)
                 currentNode = newNode
             if len(cycle) != 0:
-                addexclusions(((x,y), nextnode), exclusions, nodes, cycle)
-                Cycles[((x,y), nextnode)] = cycle
+                addexclusions(order, exclusions, nodes, cycle)
+                Cycles[order] = cycle
 
 faces = []
 for stpair in Cycles:
