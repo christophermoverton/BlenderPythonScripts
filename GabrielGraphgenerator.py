@@ -1,5 +1,6 @@
 import random
 import bpy
+import collections
 ## Random Gabriel Graph generator
 ## In this case applying methods similar to voronoi graph generator, or if
 ## you like you could use Delaunay Triangulation to search out the
@@ -447,8 +448,27 @@ def getexclusions(nodepair, exclusions):
         return exclusions[nodepair]
     else:
         return None
+
+def ordervertices(cycle):
+    ## find minimum cycle
+    minx = float('inf')
+    miny = float('inf')
+    mincell = None
+    for cell in cycle:
+        cellx, celly = cell
+        if cellx < minx and celly < miny:
+            mincell = cell
+            minx = cellx
+            miny = celly
+    mincelli = cycle.index(mincell)
+    rotateval = -mincelli
+    dcycle = collections.deque(cycle)
+    dcycle.rotate(rotateval)
+    return list(dcycle)
+
 exclusions = {}    
 Cycles = {}
+faceindexing = []
 for x in range(0,dimx):
     for y in range(0,dimy):
         maxx = 0
@@ -496,13 +516,20 @@ for x in range(0,dimx):
                 ##print(currentNode)
                 currentNode = newNode
             if len(cycle) != 0:
-                addexclusions(order, exclusions, nodes, cycle)
-                Cycles[order] = cycle
+                newcycle = [order[1]]
+                newcycle = newcycle + cycle
+                cycle = ordervertices(newcycle)
+                if not tuple(cycle) in faceindexing: 
+                    addexclusions(order, exclusions, nodes, cycle)
+                    Cycles[order] = cycle
+                    faceindexing.append(tuple(cycle))
+                else:
+                    print('hit')
 
 faces = []
 for stpair in Cycles:
     verts = []
-    verts.append(nodes[stpair[1]]['vertindex'])
+    ##verts.append(nodes[stpair[1]]['vertindex'])
     for cell in Cycles[stpair]:
         verts.append(nodes[cell]['vertindex'])
     faces.append(verts)
