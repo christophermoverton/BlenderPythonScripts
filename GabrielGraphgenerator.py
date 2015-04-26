@@ -115,6 +115,7 @@ def distance(pos,pos2):
 i = 0
 vertices = []
 for x in range(0,dimx):
+    rowi = i
     for y in range(0,dimy):
         attr = {}
         localx = random.random()
@@ -133,6 +134,10 @@ for x in range(0,dimx):
 ##        attr['s'] = None
         attr['neighbors'] = []
         nodes[(x,y)] = attr
+        i += 1
+    for y in range(0,dimy):
+        attr = nodes[(x,y)]
+        posx,posy = attr['position']
         for direct in dirtopos:
             if checkNeighbor(nodes,direct, (x,y), dchecks, dirtopos):
                 nattr = {}
@@ -149,7 +154,6 @@ for x in range(0,dimx):
                 nodes[c2pos]['neighbors'].append(currentattr)
         nodes[(x,y)] = attr
         vertices.append((posx,posy, 0.0))
-        i += 1
 
 ## now we need to path trace from to and from a starting vertex without
 ## the trivial path that is from start to second vertex back to start
