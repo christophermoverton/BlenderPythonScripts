@@ -407,7 +407,7 @@ def Dijkstramodified(Graph, source, target, exclusion):
     return dist, distmap, prev, prevmap
 
 ##dist, distmap, prev, prevmap, Bridgepairs, Cycles, Paths = Dijkstramodified(nodes,(0,0))
-def addexclusions(nodepair, exclusions, Graph, cycle):
+def addexclusions(nodepair, exclusions, Graph, cycle, edgfacecount):
     ##assumed nodepair provided in proper source target ordering
     currentcell = nodepair[1]
     cposx, cposy = Graph[currentcell]['position']
@@ -431,17 +431,32 @@ def addexclusions(nodepair, exclusions, Graph, cycle):
             else:
                 if not npos in list(order):
                     exclusions[order] = [npos]
-##        if cellind != len(cycle)-1:
-##            npos = cycle[cellind+1]
-##            nposx,nposy = Graph[npos]['position']
-##            if nposx >= cposx and nposx <= cellx:
-##                if order in exclusions:
-##                    if not npos in list(order):
-##                        exclusions[order].append(npos)
-##                else:
-##                    if not npos in list(order):
-##                        exclusions[order] = [npos]
+        if order in edgfacecount:
+            edgfacecount[order] += 1
+        else:
+            edgfacecount[order] = 1
         currentcell = cell
+    cellx,celly = Graph[cycle[0]]['position']
+    if cposy > celly:
+        order = (cell, currentcell)
+    else:
+        order = (currentcell, cell)    
+    for cell2 in cycle:
+##        npos = cycle[cellind-1]
+        npos = cell2
+        nposx,nposy = Graph[npos]['position']
+##            if nposx >= cposx and nposx <= cellx:
+        if order in exclusions:
+            if not npos in list(order):
+                exclusions[order].append(npos)
+        else:
+            if not npos in list(order):
+                exclusions[order] = [npos]
+    if order in edgfacecount:
+        edgfacecount[order] += 1
+    else:
+        edgfacecount[order] = 1
+    
 
 def getexclusions(nodepair, exclusions):
     if nodepair in exclusions:
@@ -451,24 +466,43 @@ def getexclusions(nodepair, exclusions):
 
 def ordervertices(cycle):
     ## find minimum cycle
-    minx = float('inf')
-    miny = float('inf')
-    mincell = None
-    for cell in cycle:
-        cellx, celly = cell
-        if cellx < minx and celly < miny:
-            mincell = cell
-            minx = cellx
-            miny = celly
+    cycles2 = cycle[0:len(cycle)]
+    cycles2.sort(key = lambda tup:tup[0])
+    mincell = cycles2[0]
+    for cell in cycles2[1:len(cycles2)]:
+        mincellx, mincelly = mincell
+        cellx,celly = cell
+        if cellx == mincellx:
+            if celly < mincelly:
+                mincell = cell
+##    minx = float('inf')
+##    miny = float('inf')
+##    mincell = None
+##    for cell in cycle:
+##        cellx, celly = cell
+##        if cellx <= minx:
+##        ##and celly <= miny:
+##            mincell = cell
+##            minx = cellx
+##            miny = celly
     mincelli = cycle.index(mincell)
     rotateval = -mincelli
     dcycle = collections.deque(cycle)
     dcycle.rotate(rotateval)
+    print(list(dcycle))
     return list(dcycle)
+
+def getrevorder(cycle):
+    ## reverse the order of the cycle
+    pos1 = cycle[0]
+    cycle2 = cycle[1:len(cycle)]
+    ## reverse list funny command oldlist[::-1] does this
+    return [pos1] + cycle2[::-1]
 
 exclusions = {}    
 Cycles = {}
 faceindexing = []
+edgfacecount = {}
 for x in range(0,dimx):
     for y in range(0,dimy):
         maxx = 0
@@ -479,14 +513,16 @@ for x in range(0,dimx):
             npos = neighbor['cellposition']
             nposlist.append(npos)
         nposlist.sort(key = lambda tup:tup[1], reverse=True)
-        nposlist2 = [nposlist[0]]
+        nposlist2 = []##[nposlist[0]]
         ymax = nposlist[0][1]
-        nposlist = nposlist[1:len(nposlist)]
+        nposlist = nposlist[0:len(nposlist)]
         cposx, cposy = nodes[(x,y)]['position']
         for npos in nposlist:
             nposx, nposy = nodes[npos]['position']
             if nposy >= cposy:
                 nposlist2.append(npos)
+        if len(nposlist2) == 0:
+            continue
         nposlist2.sort(key = lambda tup:tup[0])
         # choosing the ymax and xmin neighbor node
         for nextnode in nposlist2:
@@ -496,7 +532,10 @@ for x in range(0,dimx):
                 order = ((x,y),nextnode)
             else:
                 order = (nextnode, (x,y))
-            excs = getexclusions( order, exclusions)
+            if order in edgfacecount:
+                if edgfacecount[order] >= 2:
+                    continue
+            excs = getexclusions(order, exclusions)
             if excs == None:
                 excs = []
             dist, distmap, prev, prevmap = Dijkstramodified(nodes,(x,y),
@@ -519,12 +558,16 @@ for x in range(0,dimx):
                 newcycle = [order[1]]
                 newcycle = newcycle + cycle
                 cycle = ordervertices(newcycle)
-                if not tuple(cycle) in faceindexing: 
-                    addexclusions(order, exclusions, nodes, cycle)
+                revcycle = getrevorder(cycle)
+                t1 = tuple(cycle) in faceindexing
+                t2 = tuple(revcycle) in faceindexing
+                if not t1 and not t2: 
+                    addexclusions(order, exclusions, nodes, cycle, edgfacecount)
                     Cycles[order] = cycle
                     faceindexing.append(tuple(cycle))
-                else:
-                    print('hit')
+
+##                else:
+##                    print('hit')
 
 faces = []
 for stpair in Cycles:
