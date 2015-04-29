@@ -25,8 +25,8 @@ import collections
 nodes = {}
 global dimx
 global dimy
-dimx = 10
-dimy = 10
+dimx = 20
+dimy = 20
 cellsize = 1
 ## building a distance checking hash map
 ## this is used in the disk check algorithm
