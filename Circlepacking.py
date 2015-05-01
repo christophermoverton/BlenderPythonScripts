@@ -157,11 +157,13 @@ def solveSingleTangentC(c1,phi,r):
 
 ##variables
 Mincirclesize = .25
+global Minphirange
 Minphirange = (math.pi/360.0*3.0, math.pi/360.0*10.0)
 Minneighborphi = math.pi/360.0*60.0
 Minappolloniusphi = math.pi/360.0*45.0
 Rcirclesize = (.25, 10.0) ## use random.uniform()
 Maxcircles = 10000
+Tangents = (2,6)
 
 dimx = 50.0
 dimy = 50.0
@@ -172,7 +174,7 @@ attr = {}
 rcsizex, rcsizey = Rcirclesize
 pradius = random.uniform(rcsizex,rcsizey)
 pcircle = (dimx/2.0,dimy/2, pradius)
-attr['neighbors'] = None
+attr['neighbors'] = {}
 attr['faces'] = None
 minmphi,maxmphi = Minphirange
 attr['minphi'] = random.uniform(minmphi,maxmphi)
@@ -180,8 +182,108 @@ attr['subarcs'] = None
 attr['subarcsord'] = None  ##ordered subarcs list
 attr['closures'] = None
 attr['circle'] = pcircle
+attr['tangents'] = random.randint(Tangents[0],Tangents[1])
 Circles[pcircle] = attr
 Q.append(Circles[pcircle])
+
+def binarysearch(phi, btree):
+    for val in btree:
+        circle, angle = val
+        if phi > angle:
+            if type(btree[val]['u']) == dict:
+                return binarysearch(phi, btree[val]['u'])
+            else:
+                return btree[val]['u']
+        else:
+            if btree[val]['l'] == dict:
+                return binarysearch(phi, btree[val]['l'])
+            else:
+                return btree[val]['l']
+
+def addbinary(circle, phi, btree):
+    for val in btree:
+        circle, angle = val
+        if phi > angle:
+            if type(btree[val]['u']) == dict:
+                addbinary(circle, phi, btree[val]['u'])
+            else:
+                c2,angle2 = btree[val]['u']
+                if phi > angle2:
+                    newtree = {}
+                    newtree['u'] = (circle,phi)
+                    newtree['l'] = btree[val]['u']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['u'] = attr
+                else:
+                    newtree = {}
+                    newtree['l'] = (circle,phi)
+                    newtree['u'] = btree[val]['u']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['u'] = attr                    
+        else:
+            if type(btree[val]['l']) == dict:
+                addbinary(circle, phi, btree[val]['l'])
+            else:
+                c2,angle2 = btree[val]['l']
+                if phi > angle2:
+                    newtree = {}
+                    newtree['u'] = (circle,phi)
+                    newtree['l'] = btree[val]['l']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['l'] = attr
+                else:
+                    newtree = {}
+                    newtree['l'] = (circle,phi)
+                    newtree['u'] = btree[val]['u']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['l'] = attr
+
+def getbinarytreevals(vals, btree):
+    for val in btree:
+        circle, angle = val
+        for bound in btree[val]:
+            if type(btree[val][bound]) == dict:
+                return getbinarytreevals(phi, btree[val]['u'])
+            else:
+                if not btree[val][bound] in vals:
+                    vals.append(btree[val][bound])
+
+def getinitbinarytree(cphi):
+    newtree = {}
+    newtree['u'] = cphi
+    newtree['l'] = cphi
+    attr = {}
+    attr[cphi] = newtree
+    return attr
+
+def addTangentNPrimary(c1, cphi2, Circles, subarc, nsarc
+                       subarc2 = None):
+    c2, phi2 = cphi2
+    ## add neighbor
+    c1dict = Circles[c1]
+    neighbors = c1dict['neighbors']  
+    neighbors[c2] = {'angle':phi2}
+    subarcs = c1dict['subarcs']
+    subarcsord = c1dict['subarcsord']
+    ##if subarc in c1dict['subarcs']:
+    ## Conditions for subarcs:
+    ## subarc2 not none means we are joining subarc to subarc2
+    ## this occurs with Apollonius condition positive or
+    ## Apollonius test failure.  Otherwise subarc2 None means
+    ## we are adding a distinct subarc.
+    ## nsarc is the neighboring subarc given upper bound
+    if subarc2 == None:
+        subarcs[subarc] = getinitbinarytree(cphi2)
+        if nsarc = None:
+            subarcsord.append(subarc)
+        else:
+            nindex = subarcsord.index(nsarc)
+            subarcsord.insert(nindex, subarc)    
+        
 
 While len(Q) != 0 or len(Circles) >= Maxcircles:
     ##pick Q[0]
@@ -189,38 +291,47 @@ While len(Q) != 0 or len(Circles) >= Maxcircles:
     ## pick random phi
     subarcs = circledict['subarcsord']
     subarcsord = circledict['subarcsord']
-    rphi = None
-    if subarcs == None:
-        rphi = random.uniform(0,2*math.pi)
-    else:
-        ##pick random filled subarc
-        rsubarci = random.randint(0,len(subarcsord)-1)
-        rsubarc = subarcsord[rsubarci]
-        ##pick a direction clockwise or counterclockwise
-        rsarcdir = random.uniform(0,1)
-        if rsarcdir < .5:
-            rsarcdir = -1
+    neighbors = circledict['Neighbors']
+    while len(neighbors) < circledict['tangents']:
+        rphi = None
+        if subarcs == None:
+            rphi = random.uniform(0,2*math.pi)
+            pradius = random.uniform(rcsizex,rcsizey)
+            solveSingleTangentC(c1,phi,r)
         else:
-            rsarcdir = 1
-        nrsubarc = None
-        if rsubarci+rsarcdir > len(subarcsord)-1:
-            nrsubarc = rsubarcord[0]
-        elif rsubarci+rsarcdir < 0:
-            nrsubarc = rsubarcord[len(rsubarcord)-1]
-        else:
-            nrsubarc = subarcsord[rsubarci+rsarcdir]
-        ## find min max arcboundaries
-        if rsarcdir == 1:
-            ## rsubarc right nrsubarc left
-            minarc = rsubarc[1]
-            maxarc = nrsubarc[0]
-            if maxarc < minarc:
-                maxarc = 2*math.pi + maxarc
-        else:
-            minarc = nrsubarc[1]
-            maxarc = rsubarc[0]
-            if maxarc < minarc:
-                maxarc = 2*math.pi + maxarc
-        rphi = random.randint(minarc,maxarc)
-        if rphi > 2*math.pi:
-            rphi = rphi - 2*math.pi        
+            ##pick random filled subarc
+            rsubarci = random.randint(0,len(subarcsord)-1)
+            rsubarc = subarcsord[rsubarci]
+            ##pick a direction clockwise or counterclockwise
+            rsarcdir = random.uniform(0,1)
+            if rsarcdir < .5:
+                rsarcdir = -1
+            else:
+                rsarcdir = 1
+            nrsubarc = None
+            if rsubarci+rsarcdir > len(subarcsord)-1:
+                nrsubarc = rsubarcord[0]
+            elif rsubarci+rsarcdir < 0:
+                nrsubarc = rsubarcord[len(rsubarcord)-1]
+            else:
+                nrsubarc = subarcsord[rsubarci+rsarcdir]
+            ## find min max arcboundaries
+            if rsarcdir == 1:
+                ## rsubarc right nrsubarc left
+                minarc = rsubarc[1]
+                maxarc = nrsubarc[0]
+                if maxarc < minarc:
+                    maxarc = 2*math.pi + maxarc
+            else:
+                minarc = nrsubarc[1]
+                maxarc = rsubarc[0]
+                if maxarc < minarc:
+                    maxarc = 2*math.pi + maxarc
+            rphi = random.randint(minarc,maxarc)
+            if rphi > 2*math.pi:
+                rphi = rphi - 2*math.pi
+            ##get nearest left right neighbors
+            uppertree = subarcs[maxarc]
+            lowertree = subarcs[minarc]
+            nucircle, nuphi = binarysearch(rphi, uppertree)
+            nlcircle, nlphi = binarysearch(rphi, lowertree)
