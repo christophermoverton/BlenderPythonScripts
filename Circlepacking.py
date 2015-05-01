@@ -171,11 +171,15 @@ Circles = {}
 Q = []
 ## initialize the parent
 attr = {}
+global Faces
+global EdgeFaces
+Faces = []
+EdgeFaces = {}
 rcsizex, rcsizey = Rcirclesize
 pradius = random.uniform(rcsizex,rcsizey)
 pcircle = (dimx/2.0,dimy/2, pradius)
 attr['neighbors'] = {}
-attr['faces'] = None
+
 minmphi,maxmphi = Minphirange
 attr['minphi'] = random.uniform(minmphi,maxmphi)
 attr['subarcs'] = None
@@ -202,7 +206,7 @@ def binarysearch(phi, btree):
 
 def addbinary(circle, phi, btree):
     for val in btree:
-        circle, angle = val
+        c1, angle = val
         if phi > angle:
             if type(btree[val]['u']) == dict:
                 addbinary(circle, phi, btree[val]['u'])
@@ -260,6 +264,97 @@ def getinitbinarytree(cphi):
     attr[cphi] = newtree
     return attr
 
+def joinsubarcbounds(suba1, suba2):
+    b1, b2 = suba1
+    b3, b4 = suba2
+    t1 = b1 < b3 and b2 < b4
+    t2 = b1 < b3
+    t3 = b2 < b4
+    t4 = b1 < b4
+    t5 = b2 < b3
+##    if t1:
+##        return (b1, b4)
+##    else:
+    ## noting always b1 < b2 and b3 < b4
+    if t2 and not t3:
+        # b1 < b3 < b4< b2
+        return (b1, b2)
+    elif t2 and t3 and not t5:
+        #b1 < b3 < b2 < b4
+        return (b1, b4)
+    elif t2 and t3 and t5:
+        #b1 < b2 < b3  < b4
+        return (b1, b4)
+    elif not t2 and t4 and not t3:
+        # b2 > b4  > b1 > b3 
+        return (b3, b2)
+    elif not t2 and t4 and t3:
+        # b4 > b2 > b1 > b3
+        return (b3, b4)
+    elif not t2 and not t4:
+        # b2> b1 > b4 > b3
+        return (b3, b2)
+
+def ordervertices(cycle):
+    ## find minimum cycle
+    cycles2 = cycle[0:len(cycle)]
+    cycles2.sort(key = lambda tup:tup[0])
+    mincell = cycles2[0]
+    for cell in cycles2[1:len(cycles2)]:
+        mincellx, mincelly = mincell
+        cellx,celly = cell
+        if cellx == mincellx:
+            if celly < mincelly:
+                mincell = cell
+
+    mincelli = cycle.index(mincell)
+    rotateval = -mincelli
+    dcycle = collections.deque(cycle)
+    dcycle.rotate(rotateval)
+    print(list(dcycle))
+    return list(dcycle)
+
+def get3polygons(c1, cphi2, btree1, btree2):
+    ## Apollonius solution produces three polygons
+    c2, phi2 = cphi2
+    lcphi = binarysearch(phi2, btree)
+    lc, lphi = lcphi
+    ucphi = binarysearch(phi2, btree2)
+    uc, uphi = ucphi
+    face1 = [c1,lc,c2]
+    face2 = [c1,c2,rc]
+    face3 = [lc,rc,c2]
+    face1 = ordervertices(face1)
+    face2 = ordervertices(face2)
+    face3 = ordervertices(face3)
+    return face1,face2,face3
+
+def yordering(c1, c2):
+    x1,y1 = c1
+    x2,y2 = c2
+    if y1 < y2:
+        return c1,c2
+    else:
+        return c2,c1
+
+def addedgefaces(face):
+    for c in face:
+        cind = face.index(c)
+        if cind == 0:
+            nc = face[len(face)-1]
+            ec1,ec2 = yordering(c,nc)
+            if (ec1,ec2) in EdgeFaces:
+                EdgeFaces[(ec1,ec2)].append(face)
+            else:
+                EdgeFaces[(ec1,ec2)] = [face]
+        else:
+            nc = face[cind-1]
+            ec1,ec2 = yordering(c,nc)
+            if (ec1,ec2) in EdgeFaces:
+                EdgeFaces[(ec1,ec2)].append(face)
+            else:
+                EdgeFaces[(ec1,ec2)] = [face]
+
 def addTangentNPrimary(c1, cphi2, Circles, subarc, nsarc
                        subarc2 = None):
     c2, phi2 = cphi2
@@ -269,21 +364,58 @@ def addTangentNPrimary(c1, cphi2, Circles, subarc, nsarc
     neighbors[c2] = {'angle':phi2}
     subarcs = c1dict['subarcs']
     subarcsord = c1dict['subarcsord']
+    ##polygons = c1dict['faces']
     ##if subarc in c1dict['subarcs']:
     ## Conditions for subarcs:
     ## subarc2 not none means we are joining subarc to subarc2
     ## this occurs with Apollonius condition positive or
     ## Apollonius test failure.  Otherwise subarc2 None means
     ## we are adding a distinct subarc.
-    ## nsarc is the neighboring subarc given upper bound
+    ## nsarc is the neighboring subarc given upper bound.
+    ## It is always assumed that nscarc is inside the subarc to
+    ## subarc2 boundary, and this is neither figured in recomputing
+    ## new subarc boundaries.
     if subarc2 == None:
         subarcs[subarc] = getinitbinarytree(cphi2)
         if nsarc = None:
             subarcsord.append(subarc)
         else:
             nindex = subarcsord.index(nsarc)
-            subarcsord.insert(nindex, subarc)    
-        
+            subarcsord.insert(nindex, subarc)
+    else:
+        if subarc in subarcs:
+            ## copy the subarc binary tree
+            vals = []
+            btree = subarcs[subarc]
+            getbinarytreevals(vals, btree)
+            btree2 = subarcs[subarc2]
+            ## add new polygon
+            face1, face2, face3 = get3polygons(c1, cphi2, btree1, btree2)
+            if Faces == None:
+                Faces = [face1,face2,face3]
+            else:
+                Faces += [face1,face2,face3]
+            ## update EdgeFaces mapping for tracking
+            addedgefaces(face1)
+            addedgefaces(face2)
+            addedgefaces(face3)
+            for val in vals:
+                circle, phi = val
+                addbinary(circle, phi, btree2)
+            addbinary(c2,phi2,btree2)
+            newsubarc = joinsubarcbounds(subarc, subarc2)
+            del subarcs[subarc]
+            del subarcs[subarc2]
+            subarcs[newsubarc] = btree2
+        else:
+            ## copy the subarc binary tree
+
+            btree2 = subarcs[subarc2]
+            addbinary(c2,phi2,btree2)
+            newsubarc = joinsubarcbounds(subarc, subarc2)
+            del subarcs[subarc2]
+            subarcs[newsubarc] = btree2
+            
 
 While len(Q) != 0 or len(Circles) >= Maxcircles:
     ##pick Q[0]
