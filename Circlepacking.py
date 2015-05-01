@@ -184,6 +184,7 @@ minmphi,maxmphi = Minphirange
 attr['minphi'] = random.uniform(minmphi,maxmphi)
 attr['subarcs'] = None
 attr['subarcsord'] = None  ##ordered subarcs list
+attr['subarcsbinary'] = None
 attr['closures'] = None
 attr['circle'] = pcircle
 attr['tangents'] = random.randint(Tangents[0],Tangents[1])
@@ -264,6 +265,102 @@ def getinitbinarytree(cphi):
     attr[cphi] = newtree
     return attr
 
+## The arc binary tree avoids changes to the arc subtree where arcs
+## are modified in the following way.  Arc binary searches are only
+## used for secondary tangents and not on the primary tangent circle
+## being worked.  A post primary tangent completion process is initiated
+## where either a non existent arc binary tree is created, or
+## the old one is scrapped and we use the existing subarc data set to
+## create a new one.  The reason we don't use arc binary searches on the
+## primary is that we don't need to since we randomly pick from
+## the subarc list boundaries in which to generate the random angle.
+## so we don't need to traverse the subarc on the parent circle being worked.
+## On the other hand when we need to place a subarc on a secondary tangent,
+## mapping the parent node subarc, we would need to iterate the subarcs
+## to find placement, or we could speed things up with a binary search
+## routine.  
+def arcbinarysearch(arc, btree):
+    phil, phiu = arc
+    for val in btree:
+        index, arc1 = val
+        phi1l, phi1u = arc1
+        if phil > phi1u:
+            if type(btree[val]['u']) == dict:
+                return binarysearch(phi, btree[val]['u'])
+            else:
+                return btree[val]['u']
+        elif phiu < phi1l:
+            if btree[val]['l'] == dict:
+                return binarysearch(phi, btree[val]['l'])
+            else:
+                return btree[val]['l']
+        else:
+            ## None on arc states subarc overlap
+            return index, None
+
+def addarcbinary(index, arc, btree):
+    ## needs work below where I last stopped
+    phil, phiu = arc
+    for val in btree:
+        index, arc1 = val
+        phi1l, phi1u = arc1
+        if phi > angle:
+            if type(btree[val]['u']) == dict:
+                addbinary(circle, phi, btree[val]['u'])
+            else:
+                c2,angle2 = btree[val]['u']
+                if phi > angle2:
+                    newtree = {}
+                    newtree['u'] = (circle,phi)
+                    newtree['l'] = btree[val]['u']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['u'] = attr
+                else:
+                    newtree = {}
+                    newtree['l'] = (circle,phi)
+                    newtree['u'] = btree[val]['u']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['u'] = attr                    
+        else:
+            if type(btree[val]['l']) == dict:
+                addbinary(circle, phi, btree[val]['l'])
+            else:
+                c2,angle2 = btree[val]['l']
+                if phi > angle2:
+                    newtree = {}
+                    newtree['u'] = (circle,phi)
+                    newtree['l'] = btree[val]['l']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['l'] = attr
+                else:
+                    newtree = {}
+                    newtree['l'] = (circle,phi)
+                    newtree['u'] = btree[val]['u']
+                    attr = {}
+                    attr[(circle,phi)] = newtree
+                    btree[val]['l'] = attr
+
+def getarcbinarytreevals(vals, btree):
+    for val in btree:
+        circle, angle = val
+        for bound in btree[val]:
+            if type(btree[val][bound]) == dict:
+                return getbinarytreevals(phi, btree[val]['u'])
+            else:
+                if not btree[val][bound] in vals:
+                    vals.append(btree[val][bound])
+
+def getinitarcbinarytree(cphi):
+    newtree = {}
+    newtree['u'] = cphi
+    newtree['l'] = cphi
+    attr = {}
+    attr[cphi] = newtree
+    return attr
+
 def joinsubarcbounds(suba1, suba2):
     b1, b2 = suba1
     b3, b4 = suba2
@@ -329,6 +426,31 @@ def get3polygons(c1, cphi2, btree1, btree2):
     face3 = ordervertices(face3)
     return face1,face2,face3
 
+def get1polygon(c1, cphi2, btree1):
+    ## 3 tangent circle case
+    c2, phi2 = cphi2
+    lcphi = binarysearch(phi2, btree)
+    lc, lphi = lcphi
+    face1 = [c1,lc,c2]
+    face1 = ordervertices(face1)
+    return face1
+
+def oppangle(phi):
+    return math.pi + phi
+
+def solve3tangentangle(c,cphi1,cphi2):
+    ## in this problem we know the angles phi1 and phi2 on the
+    ## parent circle with respect to tangent triad, but need
+    ## a solution giving the global angle phi12 as related to
+    ## c1 to c2, the angle phi21 is oppangle phi12
+    c1,phi1 = cphi1
+    c2,phi2 = cphi2
+    c1x,c1y = c1
+    c2x,c2y = c2
+    phi12 = math.atan((c2y-c1y)/(c2x-c1x))
+    phi1opp = oppangle(phi1)
+    return phi12+phi1opp
+    
 def yordering(c1, c2):
     x1,y1 = c1
     x2,y2 = c2
@@ -354,6 +476,29 @@ def addedgefaces(face):
                 EdgeFaces[(ec1,ec2)].append(face)
             else:
                 EdgeFaces[(ec1,ec2)] = [face]
+
+def addTangent(cphi2,Circles):
+    c2, phi2 = cphi2
+    ## add neighbor
+    if not c2 in Circles:
+        attr = {}
+        attr['minphi'] = random.uniform(minmphi,maxmphi)
+        attr['subarcs'] = None
+        attr['subarcsord'] = None  ##ordered subarcs list
+        attr['closures'] = None
+        attr['circle'] = c2
+        attr['tangents'] = random.randint(Tangents[0],Tangents[1])
+        Circles[c2] = attr
+
+def addTangentNSecond(cp, cphisec, Circles):
+    c2, phi2 = cphisec
+    c2dict = Circles[c2]
+    neighbors = c2dict['neighbors']
+    neighbors[cp] = {'angle':oppangle(phi2)}
+    subarcs = c2dict['subarcs']
+    subarcsord = c2dict['subarcsord']
+    minphi = c2dict['minphi']
+    
 
 def addTangentNPrimary(c1, cphi2, Circles, subarc, nsarc
                        subarc2 = None):
@@ -415,7 +560,13 @@ def addTangentNPrimary(c1, cphi2, Circles, subarc, nsarc
             newsubarc = joinsubarcbounds(subarc, subarc2)
             del subarcs[subarc2]
             subarcs[newsubarc] = btree2
-            
+            face1 = get1polygon(c1, cphi2, btree1)
+            if Faces == None:
+                Faces = [face1]
+            else:
+                Faces += [face1]
+            ## update EdgeFaces mapping for tracking
+            addedgefaces(face1)            
 
 While len(Q) != 0 or len(Circles) >= Maxcircles:
     ##pick Q[0]
