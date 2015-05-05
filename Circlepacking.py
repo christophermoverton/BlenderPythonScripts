@@ -73,7 +73,23 @@ def solveTwoTangentC(c1,c2, phi):
 ##     r = 2r1r2/(r2-r1(r2+r1)cos phi)-r1 .
     x1,y1,r1 = c1
     x2,y2,r2 = c2
-    r = (2*r1*r2)/(r2-r1*(r2+r1)*math.cos(phi))-r1
+    r = (2*r1*r2)/(r2-r1+(r2+r1)*math.cos(phi))-r1
+    x = (r1+r)*math.cos(phi)
+    y = (r1+r)*math.sin(phi)
+
+    return Circle(x,y,r)
+
+def solveTwoTangentCi(c1,c2, phi):
+##    Solution for two tangents where solution is an interior tangent relative
+##    to one circle c1
+##     Where tangent circles C, C1, and C2 are exterior relative to one another
+##     and C having origin O((r1+r) cos phi
+##    , (r1+r) sin phi), C1 origin (0,0) and C2 origin (r1+r2,0)
+##     and phi is the angle subtended from C1C2 to C1C then
+##     r = 2r1r2/(r2-r1(r2+r1)cos phi)-r1 .
+    x1,y1,r1 = c1
+    x2,y2,r2 = c2
+    r = r1 - (2*r1*r2)/(r1-r2+(r2+r1)*math.cos(phi))
     x = (r1+r)*math.cos(phi)
     y = (r1+r)*math.sin(phi)
 
