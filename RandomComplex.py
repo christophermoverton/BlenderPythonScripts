@@ -81,38 +81,12 @@ for i in range(0,3):
         a = vertices[0]
         b = vertices[len(vertices)-1]
         updateEdges(a,b,edges,dedge,vedges)
-##        edges.append((a,b))
-##        d = distance(a,b)
-##        if d in dedge:
-##            dedge[d].append((a,b))
-##        else:
-##            dedge[d] = [a,b]
-##        if a in vedges:
-##            vedges[a].append((a,b))
-##        else:
-##            vedges[a] = [(a,b)]
-##        if b in vedges:
-##            vedges[b].append((a,b))
-##        else:
-##            vedges[a] = [(a,b)]
+
     edgecount += 1
 a = vertices[2]
 b = vertices[1]
 updateEdges(a,b,edges,dedge,vedges)
-##edges.append((vertices[2],vertices[1]))
-##d = distance(a,b)
-##if d in dedge:
-##    dedge[d].append((a,b))
-##else:
-##    dedge[d] = [a,b]
-##if a in vedges:
-##    vedges[a].append((a,b))
-##else:
-##    vedges[a] = [(a,b)]
-##if b in vedges:
-##    vedges[b].append((a,b))
-##else:
-##    vedges[a] = [(a,b)]
+
 edgecount += 1
 
 Q = []
@@ -133,14 +107,9 @@ while (edgecount < PolygonSize+1):
     vertices.append(nvert)
     updateEdges(pedge[0],nvert,edges,dedge,vedges)
     updateEdges(pedge[1],nvert,edges,dedge,vedges)
-    ##nedge1 = (pedge[0],nvert)
-    ##nedge2 = (pedge[1],nvert)
-##    pedgei = edges.index(pedge)
-##    del edges[pedgei]
+
     deleteEdge(pedge,edges,dedge,vedges)
-    ##edges.append(nedge1)
-    ##edges.append(nedge2)
-    ##del Q[0]
+
     edgecount += 1
     print('Q[0]', Q[0])
     print('qedges', qedges)
