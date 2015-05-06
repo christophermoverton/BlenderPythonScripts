@@ -10,4 +10,4 @@ exec(compile(open(filename).read(), filename, 'exec'))
 filename = "/home/strangequark/BlenderPythonScripts/Mondrian2dsubdivisiongenerator.py"
 filename = "/home/strangequark/BlenderPythonScripts/Mondrian2subdivisiongenerator2.py"
 filename = "/home/strangequark/BlenderPythonScripts/randomizedprimsmazegenerator.py"
-filename = "/home/strangequark/BlenderPythonScripts/randomizedprimsmazegenerator.py"
+filename = "/home/strangequark/BlenderPythonScripts/GabrielGraphgenerator.py"
