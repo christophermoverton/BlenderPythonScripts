@@ -2,8 +2,7 @@
 import random
 import bpy
 ## 1rst Generating Random polygon 
-##  Monotone polygon
-
+##   
 ## Starting by generating point maxima and minima.
 ##  In this method, for n>=3, iteratively start by generating 3 points.
 
@@ -15,7 +14,7 @@ import bpy
 ## of any older higher Queue priority edges in the randomization process.
 
 MaxSize = 10
-PolygonSize = 8  ## must be 3 or higher
+PolygonSize = 20  ## must be 3 or higher
 
 def clockwisewalktest(walk):
     ## works with nonconvex polygons should be safe
@@ -60,6 +59,19 @@ def polygonwalk(vert,last,target,vedges, walk):
                 if va != target:
                     nextv = va
                     polygonwalk(nextv,prev,target,vedges,walk)
+def convextest(v1,v2,v3,v4):
+    def crossproduct(p1,p2):
+        return (p1[0]*p2[1] - p1[1]*p2[0])
+    ## assumed v1,v2,v3,v4 are sequentially ordered on the
+    ##polygon walk
+    ## this is cross product comparison
+    t1 = crossproduct(v1,v2) == crossproduct(v2,v3)
+    t2 = crossproduct(v3,v4) == crossproduct(v1,v2)
+    if t1 and t2:
+        return True
+    else:
+        return False
+    
 
 def generateRandomVertex():
     return (random.random()*MaxSize, random.random()*MaxSize)
@@ -301,6 +313,8 @@ edgec = 0
 print(dedge)
 qedges = None
 pedge = None
+parents = []
+i = 0
 while (edgecount < PolygonSize+1):
     if len(Q) == 0:
        ##fill Q
@@ -309,6 +323,7 @@ while (edgecount < PolygonSize+1):
        edgekeys = list(dedge.keys())
        edgekeys.sort(reverse = True)
        Q = edgekeys
+       i += 1
     if edgec == 0:
         qedges = dedge[Q[0]][0:len(dedge[Q[0]])]   
         pedge = dedge[Q[0]][edgec]
@@ -360,8 +375,8 @@ while (edgecount < PolygonSize+1):
 ##        y = getY(pedge[0], pslope, x)
         x, y = mpoint
         print('y at midpoint: ', y)
-        x = x + rvec[0]/4.0
-        y = y + rvec[1]/4.0
+        x = x + rvec[0]/(3.5) ##+ i)
+        y = y + rvec[1]/(3.5 )##+ i)
     vertices.append((x,y))
     nvert = (x,y)
     updateEdges(pedge[0],nvert,edges,dedge,vedges)
