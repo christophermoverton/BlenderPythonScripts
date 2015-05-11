@@ -7,7 +7,7 @@ import math
 ## versus linear form at the outset...
 ## Instead I've left open a Force circle restriction which is e =0 or a=b
 ## case of the ellipse (a circle).  The circle doesn't provision velocity
-## change in traversing with angle step subdivisions, and thus yields
+## change in traversing with equal angle step subdivisions, and thus yields
 ## 'purer' geometric forms of lesser order (relative the circle) n gon
 ## types.
 
