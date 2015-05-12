@@ -29,7 +29,7 @@ import math
 
 
 MaxSize = 10
-PolygonSize = 40  ## must be 3 or higher
+PolygonSize = 100 ## must be 3 or higher
 
 def det2(a11,a21,a12,a22):
     return a11*a22-a21*a12
@@ -99,15 +99,18 @@ def circumcircle(p1,p2,p3):
     x2,y2 = p2
     x3,y3 = p3
     a = computedet([[x1,y1,1],[x2,y2,1],[x3,y3,1]])
-    bx = -1* computedet([[x1**2+y1**2, y1, 1],
-                         [x2**2+y2**2, y2, 1],[x3**2+y3**2,y3,1]])
-    by = computedet([[x1**2+y1**2, x1, 1],[x2**2+y2**2,x2,1],
-                     [x3**2+y3**2,x3,1]])
-    c = -1*computedet([[x1**2+y1**2, x1, y1],[x2**2+y2**2,x2,y2],
-                       [x3**2+y3**2,x3,y3]])
+    bx = -1* computedet([[abs(x1**2)+abs(y1**2), y1, 1],
+                         [abs(x2**2)+abs(y2**2), y2, 1],
+                         [abs(x3**2)+abs(y3**2), y3, 1]])
+    by = computedet([[abs(x1**2)+abs(y1**2), x1, 1],
+                     [abs(x2**2)+abs(y2**2), x2, 1],
+                     [abs(x3**2)+abs(y3**2), x3, 1]])
+    c = -1*computedet([[abs(x1**2)+abs(y1**2), x1, y1],
+                       [abs(x2**2)+abs(y2**2), x2, y2],
+                       [abs(x3**2)+abs(y3**2), x3, y3]])
     x0 = -bx/(2*a)
     y0 = -by/(2*a)
-    r = (bx**2+by**2 - 4*a*c)**.5/ (2*abs(a))
+    r = (abs(bx**2)+abs(by**2) - 4*a*c)**.5/ (2*abs(a))
     return (x0,y0,r)
     
 def clockwisewalktest(walk):
@@ -302,8 +305,9 @@ def getneighborverts(edge,vedges):
 def norm(vec):
     ##2d norm
     vx, vy = vec
-    vx = vx/(vx**2+vy**2)**.5
-    vy = vy/(vx**2+vy**2)**.5
+    d = (abs(vx**2)+abs(vy**2))**.5
+    vx = vx/d
+    vy = vy/d
     return [vx,vy]
     
 def updateEdges(a,b,edges,dedge,vedges):
@@ -368,6 +372,7 @@ a = vertices[2]
 b = vertices[1]
 c = vertices[0]
 centerx,centery,circler = circumcircle(c,b,a)
+print('centerx, centery, circler ', (centerx,centery,circler))
 updateEdges(a,b,edges,dedge,vedges)
 rotheir[(a,b)] = (a,b)
 edgecount += 1
@@ -426,6 +431,7 @@ qedges = None
 pedge = None
 parents = []
 i = 0
+circmax = random.randint(3,8)
 while (edgecount < PolygonSize+1):
     if len(Q) == 0:
        ##fill Q
@@ -445,53 +451,101 @@ while (edgecount < PolygonSize+1):
     x = (maxx+minx)/2.0
     n1,n2,ne1,ne2 = getneighborverts(pedge,vedges)
 ##    if testdirection(ne1,pedge) and testdirection(pedge,ne2):
-    if edgecount > 9:
+    if edgecount > circmax:
         a,b = pedge
     ##    print('n1:',n1)
     ##    print('n2:', n2)
     ##    print('ne1:', ne1)
     ##    print('ne2:', ne2)
-
-        p = [n1,a,b,n2]
-        n1n2slope = slope((n1,n2))
-        theta = angle(n1n2slope)
-        thetai = -theta
-        n1 = rotatecoord(n1, theta)
-        a = rotatecoord(a, theta)
-        b = rotatecoord(b, theta)
-        minx,maxx,miny,maxy = getMinMax((a,b))
-        xscale = getXScale(minx,maxx)
-        n2 = rotatecoord(n2, theta)
-        abslope = slope(pedge)
-        midy = getY(pedge[0],abslope,x)
-        xr,yr = rotatecoord((x,midy), theta)
-        p = [n1,a,b,n2]
-        ## we need to set up interpolation which means scaling
-        ## and translating positions to end up on interval [0,1]
-        ## for p1 and p2, will also need to compute position x =-1
-        ## for p0 at y.
-        p = scale(xscale, p)
-        tr = -minx*xscale
-        sxt = xscale*xr+tr
-        p = translateX(tr, p)
-        if p[1][0] != 0.0:
-            p = [p[3],p[2],p[1],p[0]]
-        ne1 = (p[0],p[1])
-        ne2 = (p[2],p[3])
-        sne1 = slope(ne1)
-        sne2 = slope(ne2)
-        ny1 = getY(p[0], sne1, -1)
-        ny2 = getY(p[3], sne2, 2)
-        print('ny1:', ny1)
-        print('ny2:', ny2)
-        print('p:',p)
-        py = [ny1,p[1][1],p[2][1],ny2]
-        syt = cubicInterpolate (py, sxt)
-        ##rescale y back to original coordinate
-        ## note: we don't worry about retranslating since this isn't an xcoordinate
-        y = syt*1/xscale
-        xpt = (sxt-tr)*1/xscale
-        x,y = rotatecoord((xpt,y),thetai)
+##        if testdirection(ne1,pedge) and testdirection(pedge,ne2):
+##            p = [n1,a,b,n2]
+##            n1n2slope = slope((n1,n2))
+##            theta = angle(n1n2slope)
+##            thetai = -theta
+##            n1 = rotatecoord(n1, theta)
+##            a = rotatecoord(a, theta)
+##            b = rotatecoord(b, theta)
+##            minx,maxx,miny,maxy = getMinMax((a,b))
+##            xscale = getXScale(minx,maxx)
+##            n2 = rotatecoord(n2, theta)
+##            abslope = slope(pedge)
+##            midy = getY(pedge[0],abslope,x)
+##            xr,yr = rotatecoord((x,midy), theta)
+##            print('xr, yr:', (xr,yr))
+##            print('x, y: ', (x, midy))
+##            print('check x, y: ', rotatecoord((xr,yr), thetai))
+##            p = [n1,a,b,n2]
+##            ## we need to set up interpolation which means scaling
+##            ## and translating positions to end up on interval [0,1]
+##            ## for p1 and p2, will also need to compute position x =-1
+##            ## for p0 at y.
+##            p = scale(xscale, p)
+##            tr = -minx*xscale
+##            sxt = xscale*xr+tr
+##            p = translateX(tr, p)
+##            if p[1][0] != 0.0:
+##                p = [p[3],p[2],p[1],p[0]]
+##            ne1 = (p[0],p[1])
+##            ne2 = (p[2],p[3])
+##            sne1 = slope(ne1)
+##            sne2 = slope(ne2)
+##            ny1 = getY(p[0], sne1, -1)
+##            ny2 = getY(p[3], sne2, 2)
+##            print('ny1:', ny1)
+##            print('ny2:', ny2)
+##            print('p:',p)
+##            print('sxt: ', sxt)
+##            py = [ny1,p[1][1],p[2][1],ny2]
+##            
+##            syt = cubicInterpolate (py, sxt)
+##            ##rescale y back to original coordinate
+##            ## note: we don't worry about retranslating since this isn't an xcoordinate
+##            y = syt*1/xscale
+##            xpt = (sxt-tr)*1/xscale
+##            x,y = rotatecoord((xpt,y),thetai)
+##        else:
+##            a,b = pedge
+##            xscale = getXScale(minx,maxx)
+##        ##    print('n1:',n1)
+##        ##    print('n2:', n2)
+##        ##    print('ne1:', ne1)
+##        ##    print('ne2:', ne2)
+##
+##            p = [n1,a,b,n2]
+##            ## we need to set up interpolation which means scaling
+##            ## and translating positions to end up on interval [0,1]
+##            ## for p1 and p2, will also need to compute position x =-1
+##            ## for p0 at y.
+##            p = scale(xscale, p)
+##            tr = -minx*xscale
+##            sxt = xscale*x+tr
+##            p = translateX(tr, p)
+##            if p[1][0] != 0.0:
+##                p = [p[3],p[2],p[1],p[0]]
+##            ne1 = (p[0],p[1])
+##            ne2 = (p[2],p[3])
+##            sne1 = slope(ne1)
+##            sne2 = slope(ne2)
+##            ny1 = getY(p[0], sne1, -1)
+##            ny2 = getY(p[3], sne2, 2)
+##            print('ny1:', ny1)
+##            print('ny2:', ny2)
+##            print('p:',p)
+##            py = [ny1,p[1][1],p[2][1],ny2]
+##            syt = cubicInterpolate (py, sxt)
+##            ##rescale y back to original coordinate
+##            ## note: we don't worry about retranslating since this isn't an xcoordinate
+##            y = syt*1/xscale
+        mpoint = midpoint(pedge)
+##        pslope = slope(pedge)
+##        nslope = slopenormal(pslope)
+        rvec = setRotation(pedge, rotheir)
+##        y = getY(pedge[0], pslope, x)
+        x, y = mpoint
+        sc = random.randint(2,5)
+        print('y at midpoint: ', y)
+        x = x + rvec[0]/(4*sc ) ##+ i)
+        y = y + rvec[1]/(4*sc)##+ i)
         
     else:
         mpoint = midpoint(pedge)
@@ -499,14 +553,19 @@ while (edgecount < PolygonSize+1):
 ##        nslope = slopenormal(pslope)
         rvec = setRotation(pedge, rotheir)
 ##        y = getY(pedge[0], pslope, x)
+##        rvec = [mpoint[0]-centerx, mpoint[1]-centery]
         x, y = mpoint
         print('y at midpoint: ', y)
         dmidcent = distance((centerx,centery),mpoint)
-        vlen = circler - dmidcent
+##        vlen = circler - dmidcent
         rvec = norm(rvec)
-        rvec = (rvec[0]*vlen, rvec[1]*vlen)
-        x = x + rvec[0] ##+ i)
-        y = y + rvec[1] ##+ i)
+##        rvec = (rvec[0]*vlen, rvec[1]*vlen)
+        rvec = (rvec[0]*circler, rvec[1]*circler)
+##        x = x + rvec[0] ##+ i)
+##        y = y + rvec[1] ##+ i)
+        print('rvec: ', rvec)
+        x = centerx + rvec[0]
+        y = centery + rvec[1]
     vertices.append((x,y))
     nvert = (x,y)
     updateEdges(pedge[0],nvert,edges,dedge,vedges)
