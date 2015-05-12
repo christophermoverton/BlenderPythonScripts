@@ -1,6 +1,7 @@
 ## Generate Random Complex K (for circle packing algorithm)
 import random
 import bpy
+import math
 ## 1rst Generating Random polygon 
 ##   
 ## Starting by generating point maxima and minima.
@@ -17,9 +18,18 @@ import bpy
 ## of the 3 gon base, and then prescribes boundary points along
 ## the circumcircle in determining edge subdivisions.
 
+## Alternately one can generate the random circle and then three random points
+## given to a distance conformal mapping to the circle's radial arc.
+
+## For instance, one way to do this is in polar coordinates randomly choosing
+## an angle and then with a known radius computing x, y coordinates
+## from polar ones.
+
+
+
 
 MaxSize = 10
-PolygonSize = 7  ## must be 3 or higher
+PolygonSize = 40  ## must be 3 or higher
 
 def det2(a11,a21,a12,a22):
     return a11*a22-a21*a12
@@ -205,6 +215,14 @@ def slope(edge):
     bx,by = b
     return (by - ay)/(bx - ax)
 
+def angle(slope):
+    return math.atan(slope)
+
+def rotatecoord(coord, theta):
+    x,y = coord
+    return (x*math.cos(theta) - y*math.sin(theta),
+            x*math.sin(theta) + y*math.cos(theta))
+
 def midpoint(edge):
     a,b = edge
     return ((a[0]+b[0])/2,(a[1]+b[1])/2)
@@ -255,6 +273,7 @@ def setRotation(edge, rotheir):
 
 def getY(point, slope, x):
     return slope*(x - point[0]) + point[1]
+
 
 def getneighborverts(edge,vedges):
     a,b = edge
@@ -426,14 +445,26 @@ while (edgecount < PolygonSize+1):
     x = (maxx+minx)/2.0
     n1,n2,ne1,ne2 = getneighborverts(pedge,vedges)
 ##    if testdirection(ne1,pedge) and testdirection(pedge,ne2):
-    if 1 == 0:
+    if edgecount > 9:
         a,b = pedge
-        xscale = getXScale(minx,maxx)
     ##    print('n1:',n1)
     ##    print('n2:', n2)
     ##    print('ne1:', ne1)
     ##    print('ne2:', ne2)
 
+        p = [n1,a,b,n2]
+        n1n2slope = slope((n1,n2))
+        theta = angle(n1n2slope)
+        thetai = -theta
+        n1 = rotatecoord(n1, theta)
+        a = rotatecoord(a, theta)
+        b = rotatecoord(b, theta)
+        minx,maxx,miny,maxy = getMinMax((a,b))
+        xscale = getXScale(minx,maxx)
+        n2 = rotatecoord(n2, theta)
+        abslope = slope(pedge)
+        midy = getY(pedge[0],abslope,x)
+        xr,yr = rotatecoord((x,midy), theta)
         p = [n1,a,b,n2]
         ## we need to set up interpolation which means scaling
         ## and translating positions to end up on interval [0,1]
@@ -441,7 +472,7 @@ while (edgecount < PolygonSize+1):
         ## for p0 at y.
         p = scale(xscale, p)
         tr = -minx*xscale
-        sxt = xscale*x+tr
+        sxt = xscale*xr+tr
         p = translateX(tr, p)
         if p[1][0] != 0.0:
             p = [p[3],p[2],p[1],p[0]]
@@ -459,6 +490,9 @@ while (edgecount < PolygonSize+1):
         ##rescale y back to original coordinate
         ## note: we don't worry about retranslating since this isn't an xcoordinate
         y = syt*1/xscale
+        xpt = (sxt-tr)*1/xscale
+        x,y = rotatecoord((xpt,y),thetai)
+        
     else:
         mpoint = midpoint(pedge)
 ##        pslope = slope(pedge)
