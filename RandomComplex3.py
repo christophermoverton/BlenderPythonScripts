@@ -29,7 +29,9 @@ import math
 
 
 MaxSize = 10
-PolygonSize = 100 ## must be 3 or higher
+PolygonSize = 10 ## must be 3 or higher
+MaxScaleIterations = 10
+Scale = .95
 
 def det2(a11,a21,a12,a22):
     return a11*a22-a21*a12
@@ -605,14 +607,64 @@ for vert in tedge:
         last = vert
 polygonwalk(a,last,target,vedges,walk)
 face = []
-for vert in walk:
-    face.append(vertices.index(vert))
+normneighbors = {}
+prevvertices = vertices[0:len(vertices)]
+i = 1
 bvertices = []
+##bvertices += vertices
 for vert in vertices:
     x,y = vert
     bvertices.append((x,y,0.0))
 faces = []
-faces.append(tuple(face))
+while i < MaxScaleIterations:
+    index = len(walk)*i
+    indexmn1 = len(walk)*(i-1)
+    nvertices = []
+    nvertices2 = []
+    for vert in walk:
+        verti = vertices.index(vert)
+        vert1 = verti+indexmn1
+        vert2 = verti+index
+        vindex = walk.index(vert)     
+        vindexn = None
+        if vindex == 0:
+            vindexn = len(walk)-1
+        else:
+            vindexn = vindex-1
+        vnc = walk[vindexn]
+        vni = vertices.index(vnc)
+        vert3 = vni + index
+        vert4 = vni + indexmn1
+        face = (vert1,vert2,vert3,vert4)
+        faces.append(face)
+    for vert in prevvertices:
+        x,y = vert
+        ## translate coordinates
+        xtr = x - centerx
+        ytr = y - centery
+        xs = xtr*Scale
+        ys = ytr*Scale
+        xs += centerx
+        ys += centery
+        nvertices2.append((xs,ys))
+        nvertices.append((xs, ys, 0.0))
+    prevvertices = nvertices2[0:len(nvertices2)]
+    bvertices += nvertices
+    i+= 1
+
+## to solve the problem of nested scaling of a polygon to a common
+## centroid, one need translate coordinates of the original polygon
+## so that the centroid is the origin, scale all vertices, then
+## retranslate these coordinates back to the original coordinate
+## system.
+##for vert in walk:    
+##    face.append(vertices.index(vert))
+##bvertices = []
+##for vert in vertices:
+##    x,y = vert
+##    bvertices.append((x,y,0.0))
+##faces = []
+##faces.append(tuple(face))
 meshName = "Polygon"
 obName = "PolygonObj"
 me = bpy.data.meshes.new(meshName)
