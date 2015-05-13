@@ -544,7 +544,7 @@ while (edgecount < PolygonSize+1):
         rvec = setRotation(pedge, rotheir)
 ##        y = getY(pedge[0], pslope, x)
         x, y = mpoint
-        sc = random.randint(2,5)
+        sc = random.randint(1,8)
         print('y at midpoint: ', y)
         x = x + rvec[0]/(4*sc ) ##+ i)
         y = y + rvec[1]/(4*sc)##+ i)
@@ -616,12 +616,13 @@ for vert in vertices:
     x,y = vert
     bvertices.append((x,y,0.0))
 faces = []
+height = 0
 while i < MaxScaleIterations:
     index = len(walk)*i
     indexmn1 = len(walk)*(i-1)
     nvertices = []
     nvertices2 = []
-    height = i*.1
+    height += random.random()*.1
     for vert in walk:
         verti = vertices.index(vert)
         vert1 = verti+indexmn1
