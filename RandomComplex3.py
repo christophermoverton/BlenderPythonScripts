@@ -423,6 +423,66 @@ def setrotatheirorder(walk, rotheir):
                 rotheir[(walk[0],vert)] = (vert,walk[0])
         prev = vert
 
+def computeNormtoArc(edge, mpoint, norm, r, C):
+    ## as per wiki using solution indicated.
+    ## s = r - (r*r-l*l)**.5
+    a,b = edge
+    l2 = distance(a,b)
+    l = l2/2.0
+    s = r - (r*r-l*l)**.5
+    x,y = mpoint
+    dnx,dny = [s*norm[0], s*norm[1]]
+    px,py = [x+dnx,y+dny]
+    d = distance(mpoint,(px,py))
+    ## check to see that this point relative to norm lies on
+    ## the circle, if not then we recompute the point using -norm
+    ## we then have to find the distance in the direction of the norm
+    ## which is r+ distance(c-mp) where c is the center of the circle,
+    ## and mp is the midpoint.
+    if distance(C,(px,py)) < r:
+        normi = [-norm[0],-norm[1]]
+        dnxi,dnyi = [s*normi[0], s*normi[1]]
+        pxi,pyi = [x+dnxi,y+dnyi]
+        dcmp = 2*r-distance(mpoint,(pxi,pyi))
+        d = dcmp
+        dnx,dny = [dcmp*norm[0], dcmp*norm[1]]
+        px,py = [x+dnx,y+dny]
+    return ((px,py),d)
+        
+def computeNormtoArc2(edge, point, norm, r, C):
+    ## generalized solution for any given point on the secant
+    ## different method per wiki
+    a,b = edge
+    ax,ay = a
+    bx,by = b
+    px, py = point
+    Cx,Cy = C
+    ## translate point and edge
+    atrx,atry = [ax-Cx,ay-Cy]
+    btrx,btry = [bx-Cx,by-Cy]
+    ptrx,ptry = [px-Cx,py-Cy]
+    ##compute angle of secant
+    sedge = slope(edge) ## invariant under translation
+    theta = math.atan(sedge)
+    ptrrtx, ptrrty = rotatecoord((ptrx,ptry), theta)
+    ## also find rotated coordinates of the norm
+    ## since we will compare solution values to the norm
+    nrtx, nrty = rotatecoord(norm, theta)
+    ## compute y'
+    yp = ((r*r-ptrrtx*ptrrtx))**.5
+    ## check +/- solution of yp
+    ## this is whether or not the direction of ptrrty to + point on the arc
+    ## is in the desired norm direction.  If not then we use the -yp
+    ## solution.
+    direcyp = yp - ptrrty
+    ##t1 = math.copysign(1,ptrrtx) == math.copysign(1,nrtx)
+    t2 = math.copysign(1,direcyp) == math.copysign(1,nrty)
+    if not t2:
+        yp = -yp
+    ## convert to previous pre rotated coordinate system
+    strx, stry = rotatecoord((ptrrtx,yp), -theta)
+    return (strx+Cx,stry+Cy, distance((strx+Cx,stry+Cy),point))
+        
 setrotatheirorder(walk,rotheir)
 print('rotheir: ', rotheir)
 
@@ -433,7 +493,7 @@ qedges = None
 pedge = None
 parents = []
 i = 0
-circmax = random.randint(3,8)
+circmax = random.randint(3,12)
 while (edgecount < PolygonSize+1):
     if len(Q) == 0:
        ##fill Q
@@ -562,12 +622,16 @@ while (edgecount < PolygonSize+1):
 ##        vlen = circler - dmidcent
         rvec = norm(rvec)
 ##        rvec = (rvec[0]*vlen, rvec[1]*vlen)
-        rvec = (rvec[0]*circler, rvec[1]*circler)
+        ##rvec = (rvec[0]*circler, rvec[1]*circler)
 ##        x = x + rvec[0] ##+ i)
 ##        y = y + rvec[1] ##+ i)
         print('rvec: ', rvec)
-        x = centerx + rvec[0]
-        y = centery + rvec[1]
+        C = [centerx,centery]
+        p,d = computeNormtoArc(pedge, mpoint, rvec, circler, C)
+        rval = random.random()
+        x,y = [x+rval*d*rvec[0],y+rval*d*rvec[1]]
+##        x = centerx + rvec[0]
+##        y = centery + rvec[1]
     vertices.append((x,y))
     nvert = (x,y)
     updateEdges(pedge[0],nvert,edges,dedge,vedges)
