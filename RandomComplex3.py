@@ -28,9 +28,9 @@ import math
 
 
 
-MaxSize = 10
-PolygonSize = 10 ## must be 3 or higher
-MaxScaleIterations = 10
+MaxSize = 20
+PolygonSize = 60 ## must be 3 or higher
+MaxScaleIterations = 30
 Scale = .95
 
 def det2(a11,a21,a12,a22):
@@ -621,6 +621,7 @@ while i < MaxScaleIterations:
     indexmn1 = len(walk)*(i-1)
     nvertices = []
     nvertices2 = []
+    height = i*.1
     for vert in walk:
         verti = vertices.index(vert)
         vert1 = verti+indexmn1
@@ -647,7 +648,7 @@ while i < MaxScaleIterations:
         xs += centerx
         ys += centery
         nvertices2.append((xs,ys))
-        nvertices.append((xs, ys, 0.0))
+        nvertices.append((xs, ys, height))
     prevvertices = nvertices2[0:len(nvertices2)]
     bvertices += nvertices
     i+= 1
