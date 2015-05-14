@@ -29,12 +29,14 @@ import math
 
 Triangulated = True
 MaxSize = 10
-PolygonSize = 30 ## must be 3 or higher
+PolygonSize = 100 ## must be 3 or higher
 MaxScaleIterations = 30
 Scale = .95
 EarlyRandom = True  ## leads to greater probability of less convex polygon,
                      ##more jagged
-AllConvex = True ## yields Completely convex polygon
+AllConvex = False ## yields Completely convex polygon
+JIntensity = 0.2  ## scale ranges from 0 to 1  with full intensity at 1
+                 ## and zero intensity at zero
 
 
 def det2(a11,a21,a12,a22):
@@ -234,7 +236,7 @@ def rotatecoord(coord, theta):
 
 def midpoint(edge):
     a,b = edge
-    return ((a[0]+b[0])/2,(a[1]+b[1])/2)
+    return ((a[0]+b[0])/2.0,(a[1]+b[1])/2.0)
 
 def slopenormal(edgeslope):
     return - 1/edgeslope
@@ -494,7 +496,7 @@ def computeNormtoArc2(edge, point, norm, r, C):
     bt = (btrx,btry)
     ##compute angle of secant
     sedge = slope((at,bt)) ## invariant under translation
-    theta = math.atan(sedge)
+    theta = math.atan(sedge)+math.pi/2.0
     ptrrtx, ptrrty = rotatecoord((ptrx,ptry), theta)
     ## also find rotated coordinates of the norm
     ## since we will compare solution values to the norm
@@ -694,6 +696,9 @@ while (edgecount < PolygonSize+1):
 ##        rvec = (rvec[0]*vlen, rvec[1]*vlen)
         if EarlyRandom:
             rval = random.random()
+            Jshift = 1.0-JIntensity
+            rval *= JIntensity
+            rval += Jshift
             rvec = (rvec[0]*rval*circler, rvec[1]*rval*circler)
         else:
             rvec = (rvec[0]*circler, rvec[1]*circler)
@@ -705,6 +710,10 @@ while (edgecount < PolygonSize+1):
 ##        p,d = computeNormtoArc2(pedge, mpoint, rvec, circler, C)
 ##        if EarlyRandom:
 ##            rval = random.random()
+##            Jshift = 1.0-JIntensity
+##            rval *= JIntensity
+##            rval += Jshift
+##            print('rval: ', rval)
 ##            x,y = [x+rval*d*rvec[0],y+rval*d*rvec[1]]
 ##        else:
 ##            x,y = p
