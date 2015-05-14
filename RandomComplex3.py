@@ -27,11 +27,15 @@ import math
 
 
 
-
-MaxSize = 20
-PolygonSize = 60 ## must be 3 or higher
+Triangulated = True
+MaxSize = 10
+PolygonSize = 30 ## must be 3 or higher
 MaxScaleIterations = 30
 Scale = .95
+EarlyRandom = True  ## leads to greater probability of less convex polygon,
+                     ##more jagged
+AllConvex = True ## yields Completely convex polygon
+
 
 def det2(a11,a21,a12,a22):
     return a11*a22-a21*a12
@@ -316,6 +320,9 @@ def updateEdges(a,b,edges,dedge,vedges):
     edges.append((a,b))
     d = distance(a,b)
     if d in dedge:
+        if (a,b) in dedge[d]:
+            print('duplicate edge FOUND!')
+            print('dup edge: ', (a,b))
         dedge[d].append((a,b))
     else:
         dedge[d] = [(a,b)]
@@ -329,23 +336,38 @@ def updateEdges(a,b,edges,dedge,vedges):
         vedges[b] = [(a,b)]
 
 def updateRotatheir(edge, parent, rotheir):
+    ## assumed under midpoint subdivision a new edge
+    ## will have at least one but not more than one
+    ## matching vertex to the root edge
     root = rotheir[parent]
     ra, rb = root
     a,b = edge
     ax,ay = a
     bx,by = b
     ## find which vertex is closest to root a
-    dara = distance(a,ra)
-    dbra = distance(b,ra)
-    if dara < dbra:
-        rotheir[edge] = (a,b)
-    else:
-        rotheir[edge] = (b,a)
+##    dara = distance(a,ra)
+##    dbra = distance(b,ra)
+##    if dara < dbra:
+##        rotheir[edge] = (a,b)
+##    else:
+##        rotheir[edge] = (b,a)
+    if a == ra or a == rb:
+        if a == rb:
+            rotheir[edge] = (b,a)
+        else:
+            rotheir[edge] = (a,b)
+    if b == ra or b == rb:
+        if b == rb:
+            rotheir[edge] = (a,b)
+        else:
+            rotheir[edge] = (b,a)
 
 def deleteEdge(edge,edges,dedge,vedges):
     a,b = edge
     d = distance(a,b)
     edges.remove(edge)
+    print('removing from dedge: ', dedge[d])
+    print('edge: ', edge)
     dedge[d].remove(edge)
     if len(dedge[d]) == 0:
         del dedge[d]
@@ -430,6 +452,7 @@ def computeNormtoArc(edge, mpoint, norm, r, C):
     l2 = distance(a,b)
     l = l2/2.0
     s = r - (r*r-l*l)**.5
+    print('s: ', s)
     x,y = mpoint
     dnx,dny = [s*norm[0], s*norm[1]]
     px,py = [x+dnx,y+dny]
@@ -439,7 +462,11 @@ def computeNormtoArc(edge, mpoint, norm, r, C):
     ## we then have to find the distance in the direction of the norm
     ## which is r+ distance(c-mp) where c is the center of the circle,
     ## and mp is the midpoint.
-    if distance(C,(px,py)) < r:
+    dist = distance(C,(px,py))
+    print('radius: ', r)
+    print('distance between C and px,py: ', distance(C,(px,py)))
+    
+    if dist < r or dist > r:
         normi = [-norm[0],-norm[1]]
         dnxi,dnyi = [s*normi[0], s*normi[1]]
         pxi,pyi = [x+dnxi,y+dnyi]
@@ -447,6 +474,8 @@ def computeNormtoArc(edge, mpoint, norm, r, C):
         d = dcmp
         dnx,dny = [dcmp*norm[0], dcmp*norm[1]]
         px,py = [x+dnx,y+dny]
+        dist = distance(C,(px,py))
+        print('new distance between C and px,py', dist)
     return ((px,py),d)
         
 def computeNormtoArc2(edge, point, norm, r, C):
@@ -461,8 +490,10 @@ def computeNormtoArc2(edge, point, norm, r, C):
     atrx,atry = [ax-Cx,ay-Cy]
     btrx,btry = [bx-Cx,by-Cy]
     ptrx,ptry = [px-Cx,py-Cy]
+    at = (atrx,atry)
+    bt = (btrx,btry)
     ##compute angle of secant
-    sedge = slope(edge) ## invariant under translation
+    sedge = slope((at,bt)) ## invariant under translation
     theta = math.atan(sedge)
     ptrrtx, ptrrty = rotatecoord((ptrx,ptry), theta)
     ## also find rotated coordinates of the norm
@@ -481,7 +512,35 @@ def computeNormtoArc2(edge, point, norm, r, C):
         yp = -yp
     ## convert to previous pre rotated coordinate system
     strx, stry = rotatecoord((ptrrtx,yp), -theta)
-    return (strx+Cx,stry+Cy, distance((strx+Cx,stry+Cy),point))
+    return ((strx+Cx,stry+Cy), distance((strx+Cx,stry+Cy),point))
+
+def Centroid(walk):
+    ## Compute A  for a non self intersecting closed polygon
+    A = 0
+    i = 0
+    for vert in walk:
+        x,y = vert
+        if i == len(walk)-1:
+            xp1,yp1 = walk[0]
+        else:
+            xp1,yp1 = walk[walk.index(vert)+1]
+        A += x*yp1-xp1*y
+    A*=.5
+    Cx = 0
+    Cy = 0
+    for vert in walk:
+        x,y = vert
+        if i == len(walk)-1:
+            xp1,yp1 = walk[0]
+        else:
+            xp1,yp1 = walk[walk.index(vert)+1]
+        Cx += (x+xp1)*(x*yp1-xp1*y)
+        Cy += (y+yp1)*(x*yp1-xp1*y)
+    Cx *= 1/(6*A)
+    Cy *= 1/(6*A)
+    return Cx,Cy
+
+
         
 setrotatheirorder(walk,rotheir)
 print('rotheir: ', rotheir)
@@ -494,6 +553,8 @@ pedge = None
 parents = []
 i = 0
 circmax = random.randint(3,12)
+if AllConvex:
+    circmax = PolygonSize+1
 while (edgecount < PolygonSize+1):
     if len(Q) == 0:
        ##fill Q
@@ -501,14 +562,23 @@ while (edgecount < PolygonSize+1):
        ##random.shuffle(edgescopy)
        edgekeys = list(dedge.keys())
        edgekeys.sort(reverse = True)
-       Q = edgekeys
+       Q = edgekeys[0:1]
+##       avgQ = sum(Q)/float(len(Q))
+##       for dist in Q:
+##           if dist/avgQ < .1:
+##               Q.remove(dist)
+##               print('removing dist: ', dist)
+       print('Q :', Q)
        i += 1
     if edgec == 0:
-        qedges = dedge[Q[0]][0:len(dedge[Q[0]])]   
+        print('new qedges: ', dedge[Q[0]])
+        qedges = dedge[Q[0]][0:len(dedge[Q[0]])]
         pedge = dedge[Q[0]][edgec]
     else:
         pedge = qedges[edgec]
     minx,maxx,miny,maxy = getMinMax(pedge)
+    x = None
+    y = None
     ##nvert = generateRandomVertexMM(minx,maxx,miny,maxy)
     x = (maxx+minx)/2.0
     n1,n2,ne1,ne2 = getneighborverts(pedge,vedges)
@@ -622,21 +692,29 @@ while (edgecount < PolygonSize+1):
 ##        vlen = circler - dmidcent
         rvec = norm(rvec)
 ##        rvec = (rvec[0]*vlen, rvec[1]*vlen)
-        ##rvec = (rvec[0]*circler, rvec[1]*circler)
+        if EarlyRandom:
+            rval = random.random()
+            rvec = (rvec[0]*rval*circler, rvec[1]*rval*circler)
+        else:
+            rvec = (rvec[0]*circler, rvec[1]*circler)
 ##        x = x + rvec[0] ##+ i)
 ##        y = y + rvec[1] ##+ i)
         print('rvec: ', rvec)
         C = [centerx,centery]
-        p,d = computeNormtoArc(pedge, mpoint, rvec, circler, C)
-        rval = random.random()
-        x,y = [x+rval*d*rvec[0],y+rval*d*rvec[1]]
-##        x = centerx + rvec[0]
-##        y = centery + rvec[1]
+##        p,d = computeNormtoArc(pedge, mpoint, rvec, circler, C)
+##        p,d = computeNormtoArc2(pedge, mpoint, rvec, circler, C)
+##        if EarlyRandom:
+##            rval = random.random()
+##            x,y = [x+rval*d*rvec[0],y+rval*d*rvec[1]]
+##        else:
+##            x,y = p
+        x = centerx + rvec[0]
+        y = centery + rvec[1]
     vertices.append((x,y))
     nvert = (x,y)
     updateEdges(pedge[0],nvert,edges,dedge,vedges)
     updateEdges(pedge[1],nvert,edges,dedge,vedges)
-
+    print('new vertex: ', nvert)
     deleteEdge(pedge,edges,dedge,vedges)
     nedge1 = (pedge[0],nvert)
     nedge2 = (pedge[1],nvert)
@@ -644,6 +722,7 @@ while (edgecount < PolygonSize+1):
     updateRotatheir(nedge2, pedge, rotheir)
     del rotheir[pedge]
     edgecount += 1
+    print('pedge: ', pedge)
     print('Q[0]', Q[0])
     print('qedges', qedges)
     print('length qedges - 1: ',len(qedges)-1)
@@ -701,8 +780,14 @@ while i < MaxScaleIterations:
         vni = vertices.index(vnc)
         vert3 = vni + index
         vert4 = vni + indexmn1
-        face = (vert1,vert2,vert3,vert4)
-        faces.append(face)
+        if Triangulated:
+            face = (vert1,vert2,vert4)
+            faces.append(face)
+            face = (vert4,vert2,vert3)
+            faces.append(face)
+        else:
+            face = (vert1,vert2,vert3,vert4)
+            faces.append(face)
     for vert in prevvertices:
         x,y = vert
         ## translate coordinates
@@ -718,6 +803,25 @@ while i < MaxScaleIterations:
     bvertices += nvertices
     i+= 1
 
+height += random.random()*.1
+bvertices.append((centerx,centery,height))
+## Final face/vertex pass
+vert3 = len(bvertices)-1
+for vert in walk:
+    verti = vertices.index(vert)
+    vert1 = verti+index
+    vindex = walk.index(vert)     
+    vindexn = None
+    if vindex == 0:
+        vindexn = len(walk)-1
+    else:
+        vindexn = vindex-1
+    vnc = walk[vindexn]
+    vni = vertices.index(vnc)
+    vert2 = vni + index
+    face = (vert1,vert3,vert2)
+    faces.append(face)
+    
 ## to solve the problem of nested scaling of a polygon to a common
 ## centroid, one need translate coordinates of the original polygon
 ## so that the centroid is the origin, scale all vertices, then
