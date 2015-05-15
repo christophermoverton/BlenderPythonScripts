@@ -12,3 +12,4 @@ filename = "/home/strangequark/BlenderPythonScripts/Mondrian2subdivisiongenerato
 filename = "/home/strangequark/BlenderPythonScripts/randomizedprimsmazegenerator.py"
 filename = "/home/strangequark/BlenderPythonScripts/GabrielGraphgenerator.py"
 filename = "/home/strangequark/BlenderPythonScripts/RandomComplex.py"
+filename = "/home/strangequark/BlenderPythonScripts/RandomComplex3.py"

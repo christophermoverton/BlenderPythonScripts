@@ -34,8 +34,10 @@ MaxScaleIterations = 30
 Scale = .95
 EarlyRandom = True  ## leads to greater probability of less convex polygon,
                      ##more jagged
-AllConvex = False ## yields Completely convex polygon
-JIntensity = 0.2  ## scale ranges from 0 to 1  with full intensity at 1
+AllConvex = False ## yields Completely convex polygon with Early Random
+                ## set False, otherwise, is likely to be extremely
+## jagged with high JIntensity and high PolygonSize
+JIntensity = 0.3  ## scale ranges from 0 to 1  with full intensity at 1
                  ## and zero intensity at zero
 
 
@@ -769,6 +771,38 @@ for vert in vertices:
     bvertices.append((x,y,0.0))
 faces = []
 height = 0
+def addinteriorcycle(cycle,Interior,vertex, order):
+    ##cycle order
+    ## This is specific to the order of face indexing
+    ## in the method given on scaling iterations
+##    if vertex in Interior:
+##        Interior[vertex] += cycle
+##    else:
+##        Interior[vertex] = [cycle]
+    if order == 2:
+        Interior[vertex] = cycle
+    elif order == 1:
+        cycle += Interior[vertex]
+        Interior[vertex] = cycle
+##    elif order == 4:
+##        cycle += Interior[vertex]
+##        Interior[vertex] = cycle
+    elif order == 5:
+        Interior[vertex].insert(3,cycle[0])
+        ## only to be found on scaled walk 1 time for exception.
+        ## this is where 4th cycle is populated before the first.
+##    elif order == 6:
+##        cycle += Interior[vertex]
+##        Interior[vertex] = cycle
+    elif order == 7:
+        Interior[vertex] += cycle
+
+Exterior = {}
+for vert in walk:
+    verti = vertices.index(vert)
+    Exterior[verti] = random.random()
+
+Interior ={}
 while i < MaxScaleIterations:
     index = len(walk)*i
     indexmn1 = len(walk)*(i-1)
@@ -794,6 +828,42 @@ while i < MaxScaleIterations:
             faces.append(face)
             face = (vert4,vert2,vert3)
             faces.append(face)
+            ## order of operations for a given vertex
+            ## A vertex is first encountered in the 2nd
+            ## configuration, followed by the 3rd, followed
+            ## by the 1rst, followed by the 4th normally
+            ## 3rd configuration is not recorded (repetition of writing
+            ## vertices).  There should normally by 6 vertices
+            ## recorded over the entire sequence for 1 vertex forming a cycle.
+            cycle4 = [vert1,vert2,vert3]
+##            cycle3 = [vert2]
+            cycle1 = [vert4]
+            cycle2 = [vert4,vert1]
+            if i == 1:
+                addinteriorcycle(cycle2,Interior,vert2,2)
+            elif i == MaxScaleIterations-1:
+                cycle2 = [vert3,vert4,vert1]
+                cycle3 = [vert2]
+                
+                addinteriorcycle(cycle4,Interior,vert4,4)
+                if walk.index(vert) == len(walk)-1:
+                    addinteriorcycle(cycle1,Interior,vert1,5)
+                    addinteriorcycle(cycle2,Interior,vert2,7)
+                    addinteriorcycle(cycle3,Interior,vert3,1)
+                elif walk.index(vert) == 0:
+                    addinteriorcycle(cycle3,Interior,vert3,2)
+                    addinteriorcycle(cycle2,Interior,vert2,2)
+                else:
+                    addinteriorcycle(cycle1,Interior,vert1,1)
+                    addinteriorcycle(cycle3,Interior,vert3,1)
+                    addinteriorcycle(cycle2,Interior,vert2,2)
+            else:
+                addinteriorcycle(cycle2,Interior,vert2,2)
+                addinteriorcycle(cycle4,Interior,vert4,1)
+                if walk.index(vert) == len(walk)-1:
+                    addinteriorcycle(cycle1,Interior,vert1,5)
+                else:
+                    addinteriorcycle(cycle1,Interior,vert1,1)
         else:
             face = (vert1,vert2,vert3,vert4)
             faces.append(face)
@@ -816,9 +886,14 @@ height += random.random()*.1
 bvertices.append((centerx,centery,height))
 ## Final face/vertex pass
 vert3 = len(bvertices)-1
+Interior[vert3] = []
 for vert in walk:
+    cycle = [vert3]
     verti = vertices.index(vert)
     vert1 = verti+index
+    Interior[vert3].append(vert1)
+    cycle += Interior[vert1]
+    Interior[vert1] = cycle
     vindex = walk.index(vert)     
     vindexn = None
     if vindex == 0:
