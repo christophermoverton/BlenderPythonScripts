@@ -13,3 +13,5 @@ filename = "/home/strangequark/BlenderPythonScripts/randomizedprimsmazegenerator
 filename = "/home/strangequark/BlenderPythonScripts/GabrielGraphgenerator.py"
 filename = "/home/strangequark/BlenderPythonScripts/RandomComplex.py"
 filename = "/home/strangequark/BlenderPythonScripts/RandomComplex3.py"
+filename2 = "/home/strangequark/BlenderPythonScripts/CirclePack.py"
+filename3 = "/home/strangequark/BlenderPythonScripts/DrawCirclePack.py"

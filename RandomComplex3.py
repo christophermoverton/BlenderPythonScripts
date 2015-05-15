@@ -29,8 +29,8 @@ import math
 
 Triangulated = True
 MaxSize = 10
-PolygonSize = 100 ## must be 3 or higher
-MaxScaleIterations = 30
+PolygonSize = 20 ## must be 3 or higher
+MaxScaleIterations = 4
 Scale = .95
 EarlyRandom = True  ## leads to greater probability of less convex polygon,
                      ##more jagged
@@ -845,7 +845,7 @@ while i < MaxScaleIterations:
                 cycle2 = [vert3,vert4,vert1]
                 cycle3 = [vert2]
                 
-                addinteriorcycle(cycle4,Interior,vert4,4)
+                addinteriorcycle(cycle4,Interior,vert4,1)
                 if walk.index(vert) == len(walk)-1:
                     addinteriorcycle(cycle1,Interior,vert1,5)
                     addinteriorcycle(cycle2,Interior,vert2,7)
@@ -853,6 +853,7 @@ while i < MaxScaleIterations:
                 elif walk.index(vert) == 0:
                     addinteriorcycle(cycle3,Interior,vert3,2)
                     addinteriorcycle(cycle2,Interior,vert2,2)
+                    addinteriorcycle(cycle1,Interior,vert1,1)
                 else:
                     addinteriorcycle(cycle1,Interior,vert1,1)
                     addinteriorcycle(cycle3,Interior,vert3,1)
