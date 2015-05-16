@@ -6,7 +6,7 @@ Following a numerical algorithm by C. R. Collins and K. Stephenson,
 
 from math import pi,acos,asin,sin,e
 
-tolerance = 1+10e-12    # how accurately to approximate things
+tolerance = 1+10e-12##-12    # how accurately to approximate things
 
 # ======================================================
 #   The main circle packing algorithm

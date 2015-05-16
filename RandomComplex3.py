@@ -29,12 +29,12 @@ import math
 
 Triangulated = True
 MaxSize = 10
-PolygonSize = 20 ## must be 3 or higher
-MaxScaleIterations = 4
-Scale = .95
-EarlyRandom = True  ## leads to greater probability of less convex polygon,
+PolygonSize = 6 ## must be 3 or higher
+MaxScaleIterations = 2
+Scale = .5
+EarlyRandom = False  ## leads to greater probability of less convex polygon,
                      ##more jagged
-AllConvex = False ## yields Completely convex polygon with Early Random
+AllConvex = True ## yields Completely convex polygon with Early Random
                 ## set False, otherwise, is likely to be extremely
 ## jagged with high JIntensity and high PolygonSize
 JIntensity = 0.3  ## scale ranges from 0 to 1  with full intensity at 1
@@ -800,7 +800,7 @@ def addinteriorcycle(cycle,Interior,vertex, order):
 Exterior = {}
 for vert in walk:
     verti = vertices.index(vert)
-    Exterior[verti] = random.random()
+    Exterior[verti] = .1##random.random()
 
 Interior ={}
 while i < MaxScaleIterations:
