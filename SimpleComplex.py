@@ -3,7 +3,8 @@ import random
 
 DimX = 9
 DimY = 9
-
+global VARIANCE
+VARIANCE = .3
 interior = {}
 exterior = {}
 c = 0
@@ -68,20 +69,56 @@ for i in range(DimX):
                         else:
                             interior[c] = [n,e,s,w]
 ##            interior[c] = [n,e,s,sw,w,nw]
-        
 
-def hex2c(interior,exterior,olabel):
+## To define a convex versus non convex node to node relation
+## That is important since a non convex node to node relation
+## indicate where polyhedra (of the same type order) should have
+## different bond configurations relative to convex types.
+##  What this means is that an outwardly convex node to node
+## type means that even bond orders are (e.g., a double bond) would
+## not have a odd 3 bond relation.  For instance, consider
+## a double bond hex complex.  Now there are precisely two points in such
+## complex where a single or double bond means that we should have
+## a triple bond configuration and not a double bond.  These are
+## the non convex node positions in the complex, or inter primitive
+## complex positions.  If we track for a given complex its structure
+## in terms of primitives (that is, a base complex that is smaller
+## and fundamental to such structure), then we can discern the bond
+## bond order type.
+## An inter primitives bond order node has a reserved identifier 0.
+def hexc(interior,exterior,olabel,ident):
+    olabel[1] = {'type':'i'}
+    olabel[1]['identifier'] = ident
+    interior[1] = [2,3,4,5,6,7]
+    olabel[1]['neighbors'] = [2,3,4,5,6,7]
+    for i in range(2,8):
+        rvar = VARIANCE*random.random()
+        exterior[i] = varshift+rvar
+        olabel[i] = {'type':'e'}
+        if i == 2:
+            olabel[i]['neighbors'] = [3,1,7]
+        elif i == 7:
+            olabel[i]['neighbors'] = [2,1,6]
+        else:
+            olabel[i]['neighbors'] = [i+1,1,i-1]
+        olabel[i]['identifier'] = ident
+
+def hex2c(interior,exterior,olabel, ident):
     for i in range(1,4):
         olabel[i] = {'type':'i'}
+        olabel[i]['identifier'] = ident
     interior[1] =[4,5,2,6,7,8]
     olabel[1]['neighbors'] = [4,5,2,6,7,8]
     interior[2] =[5,9,3,13,6,1]
     olabel[2]['neighbors'] = [5,9,3,13,6,1]
     interior[3] =[9,10,11,12,13,3]
     olabel[3]['neighbors'] = [9,10,11,12,13,3]
+    varshift = 1.0-VARIANCE
     for i in range(4,14):
-        exterior[i] = .1
+        rvar = VARIANCE*random.random()
+        exterior[i] = varshift+rvar
         olabel[i] = {'type':'e'}
+        olabel[i]['identifier'] = ident
     olabel[4]['neighbors'] = [5,1,8]
     olabel[5]['neighbors'] = [9,2,1,4]
     olabel[6]['neighbors'] = [7,1,2,13]
@@ -112,6 +149,33 @@ def hexshiftplabel(interior, exterior,olabel):
 ##            for cval in interior[o-olen]:
 ##                cycle.append(cval+olen)
 ##            cinterior[o] = cycle
+    ## adjust colabel neighbor indexing
+    for o in colabel:
+        cycle = []
+        for n in colabel[o]['neighbors']:
+            n+=olen
+            cycle.append(n)
+        colabel[o]['neighbors'] = cycle
+    for o in colabel:
+        if colabel[o]['type'] == 'e':
+            cexterior[o] = exterior[o-olen]
+        else:
+            neighs = colabel[o]['neighbors']
+            cinterior[o] = neighs[0:len(neighs)]
+    return cinterior,cexterior,colabel
+
+## abstracted plabel shift process
+def shiftplabel(interior, exterior,olabel):
+    cinterior = {}
+    cexterior = {}
+    colabel = {}
+    olen = len(olabel)
+    olist = list(olabel.keys())
+    olist.sort()
+    ## 
+    for i in range(olen):
+        colabel[olist[i]+olen] = olabel[olist[i]].copy()
+
     ## adjust colabel neighbor indexing
     for o in colabel:
         cycle = []
@@ -169,6 +233,7 @@ def connect(pack1,pack2,igroup):
                     jindex = cyclec.index(j)
                     cyclec[jindex] = igrouprev[j]
             rdict['neighbors'] = cyclec
+            rdict['identifier'] = olabel2[i]['identifier']
             olabel1[i] = rdict
             update.append(i)
             if olabel2[i]['type'] == 'e':
@@ -200,6 +265,8 @@ def connect(pack1,pack2,igroup):
             interior1[i]= olabel1[i]['neighbors']
             olabel1[i]['type'] = 'i'
             del exterior1[i]
+        else:
+            olabel1[i]['identifier'] = 0
                 
     igroupkeys = list(igroup.keys())
 
@@ -213,6 +280,27 @@ def connect(pack1,pack2,igroup):
 ## test build 2 triple bond hex, shift the labels of one set, and then
 ## connect on a node boundary appropriately
 
+## build random connections but need a test to confirm bond type
+def getbonds(pack1,pack2):
+    interior1,exterior1,olabel1 = pack1
+    interior2,exterior2,olabel2 = pack2
+    ## generate random bond type
+    if random.random() >= .5:
+        border = 2
+    else:
+        border = 1
+    ## pick a position around complex1
+    p1ekeys = list(exterior1.keys())
+    p1ekeysn = len(p1ekeys)
+    posi = random.randint(0,p1ekeysn)
+    enode1 = p1ekeys[posi]
+
+    ## pick a position around complex2
+    p1ekeys = list(exterior1.keys())
+    p1ekeysn = len(p1ekeys)
+    posi = random.randint(0,p1ekeysn)
+    enode1 = p1ekeys[posi]
+    
 interior1, exterior1,olabel1 = {},{},{}
 interior2, exterior2,olabel2 = {},{},{}
 
@@ -224,8 +312,8 @@ pack1 = (interior1,exterior1,olabel1)
 pack2 = (interior2,exterior2,olabel2)
 
 ## In this case, bottom of pack1 is indexed as 7,6,13,12
-## top of pack2 is indexed originally 4,5,9,10 or with reindexing
-## 18,19,23,24
+## top of pack2 is indexed originally 4,5,9,10 or with reindexing + 13 units
+## 17,18,22,23
 igroup = {7:17,6:18,13:22,12:23}
 ## connect packs
 connect(pack1,pack2,igroup)
