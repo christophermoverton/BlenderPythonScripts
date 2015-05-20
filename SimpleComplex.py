@@ -5,6 +5,23 @@ DimX = 9
 DimY = 9
 global VARIANCE
 VARIANCE = .3
+ComplexSize = 20  ## number of Base Complexes to form a composite Union
+MaxBaseSize = 7 ## Max n-Gon size
+CenterBase = 5 ## The median Base Complex for a Random Base Complex generation
+               ## set.  Should always be less than or equal to MaxBaseSize.
+               ##  3 <= CenterBase <= MaxBaseSize where CenterBase is an int.
+BVariance = 1.0  ## values range from 0 to 1.0 (full)  This means the
+                ## a standard deviation from Center Base for all possible
+                ## Base Complexes in a given random Base Complex set.
+
+## Computing the Random Base Complex Set
+dev1 = MaxBaseSize - CenterBase
+dev2 = CenterBase - 3
+dev = min(dev1,dev2)
+dev *= BVariance
+dev = int(dev)  ## floored no roundup
+RandomBase = range(CenterBase-dev,CenterBase+dev+1)
+
 interior = {}
 exterior = {}
 c = 0
@@ -86,6 +103,43 @@ for i in range(DimX):
 ## and fundamental to such structure), then we can discern the bond
 ## bond order type.
 ## An inter primitives bond order node has a reserved identifier 0.
+def ngonc(interior,exterior,olabel, ident,size):
+    olabel[1] = {'type':'i'}
+    olabel[1]['identifier'] = ident
+##    interior[1] = [2,3,4,5,6]
+    interior[1] = range(2,size)
+    olabel[1]['neighbors'] = range(2,size)
+    varshift = 1.0-VARIANCE
+    for i in range(2,size):
+        rvar = VARIANCE*random.random()
+        exterior[i] = varshift+rvar
+        olabel[i] = {'type':'e'}
+        if i == 2:
+            olabel[i]['neighbors'] = [3,1,size-1]
+        elif i == size-1:
+            olabel[i]['neighbors'] = [2,1,size-2]
+        else:
+            olabel[i]['neighbors'] = [i+1,1,i-1]
+        olabel[i]['identifier'] = ident
+                            
+def pentc(interior,exterior,olabel,ident):
+    olabel[1] = {'type':'i'}
+    olabel[1]['identifier'] = ident
+    interior[1] = [2,3,4,5,6]
+    olabel[1]['neighbors'] = [2,3,4,5,6]
+    varshift = 1.0-VARIANCE
+    for i in range(2,7):
+        rvar = VARIANCE*random.random()
+        exterior[i] = varshift+rvar
+        olabel[i] = {'type':'e'}
+        if i == 2:
+            olabel[i]['neighbors'] = [3,1,6]
+        elif i == 6:
+            olabel[i]['neighbors'] = [2,1,5]
+        else:
+            olabel[i]['neighbors'] = [i+1,1,i-1]
+        olabel[i]['identifier'] = ident
+
 def hexc(interior,exterior,olabel,ident):
     olabel[1] = {'type':'i'}
     olabel[1]['identifier'] = ident
@@ -166,11 +220,15 @@ def hexshiftplabel(interior, exterior,olabel):
     return cinterior,cexterior,colabel
 
 ## abstracted plabel shift process
-def shiftplabel(interior, exterior,olabel):
+def shiftplabel(interior, exterior,olabel, index = None):
     cinterior = {}
     cexterior = {}
     colabel = {}
-    olen = len(olabel)
+    olen = None
+    if index == None:  
+        olen = len(olabel)
+    else:
+        olen = index
     olist = list(olabel.keys())
     olist.sort()
     ## 
@@ -362,7 +420,7 @@ def getbonds(pack1,pack2):
     else:
         ## we still check the bond order of the end nodes in either direction
         ## to ensure that we don't have inter primitive bond order node
-        ## we can have either a quadratic or quintic order bond type
+        ## we can have either a 4 or 5 order bond type
         ## required here.  
         nnode1 = olabel1[enode1]['neighbors'][0]
         nnode2 = getnnode(enode1, nnode1, olabel1)
@@ -411,3 +469,25 @@ pack1 = (interior1,exterior1,olabel1)
 pack2 = (interior2,exterior2,olabel2)
 igroup = getbonds(pack1,pack2)
 connect(pack1,pack2,igroup)
+
+##***********************************
+interior1, exterior1, olabel1 = {},{},{}
+packs = []
+for i in range(ComplexSize):
+    pack = [interior1.copy(),exterior1.copy(),olabel1.copy()]
+    packs.append(pack)
+prevlen = 0
+for i in range(ComplexSize):
+    basei = random.randint(0,len(RandomBase)-1)
+    rbase = RandomBase[basei]
+    interior,exterior,olabel = packs[i]
+    ngonc(interior,exterior,olabel, i+1,rbase)
+    if i != 0:
+        binterior, bexterior, bolabel = packs[0]
+        interior,exterior,olabel = shiftplabel(interior, exterior,
+                                               olabel,prevlen)
+        igroup = getbonds(packs[0],packs[i])
+        connect(packs[0],packs[i],igroup)
+        prevlen = len(packs[0])
+    
+        
