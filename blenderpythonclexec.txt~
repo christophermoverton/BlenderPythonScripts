@@ -7,6 +7,7 @@ windows folder/directories for proper python pathing.
 filename = "/home/strangequark2/BlenderPythonScripts/insetextrude.py"
 exec(compile(open(filename).read(), filename, 'exec'))
 
+
 filename = "/home/strangequark/BlenderPythonScripts/Mondrian2dsubdivisiongenerator.py"
 filename = "/home/strangequark/BlenderPythonScripts/Mondrian2subdivisiongenerator2.py"
 filename = "/home/strangequark/BlenderPythonScripts/randomizedprimsmazegenerator.py"
@@ -15,3 +16,12 @@ filename = "/home/strangequark/BlenderPythonScripts/RandomComplex.py"
 filename = "/home/strangequark/BlenderPythonScripts/RandomComplex3.py"
 filename2 = "/home/strangequark/BlenderPythonScripts/CirclePack.py"
 filename3 = "/home/strangequark/BlenderPythonScripts/DrawCirclePack.py"
+filename4 = "/home/strangequark/BlenderPythonScripts/SimpleComplex.py"
+
+to execute filename4 you'll need to ensure sys.path includes
+"/home/strangequark/BlenderPythonScripts" directory
+so
+at python console run:
+>> import sys
+
+>>  
