@@ -91,6 +91,7 @@ def hexc(interior,exterior,olabel,ident):
     olabel[1]['identifier'] = ident
     interior[1] = [2,3,4,5,6,7]
     olabel[1]['neighbors'] = [2,3,4,5,6,7]
+    varshift = 1.0-VARIANCE
     for i in range(2,8):
         rvar = VARIANCE*random.random()
         exterior[i] = varshift+rvar
@@ -191,6 +192,8 @@ def shiftplabel(interior, exterior,olabel):
             cinterior[o] = neighs[0:len(neighs)]
     return cinterior,cexterior,colabel
 
+## ******INTERNAL****************
+
 def checkcyclewalk(index, label):
     ## true if complete cycle false if not complete
     neighbors = label[index]['neighbors']
@@ -200,7 +203,7 @@ def checkcyclewalk(index, label):
         return True
     else:
         return False
-
+## *****************************
 ##def order
 
 def connect(pack1,pack2,igroup):
@@ -281,6 +284,8 @@ def connect(pack1,pack2,igroup):
 ## connect on a node boundary appropriately
 
 ## build random connections but need a test to confirm bond type
+            
+## ******INTERNAL****************
 def getnnode(node, nnode, olabel):
     neighbors = olabel[node]['neighbors']
     nlen = len(neighbors)
@@ -288,6 +293,7 @@ def getnnode(node, nnode, olabel):
         return neighbors[nlen-1]
     else:
         return neighbors[0]
+## ****************************
     
 def getbonds(pack1,pack2):
     
@@ -301,15 +307,16 @@ def getbonds(pack1,pack2):
         border = 3
     ## pick a position around complex1
     p1ekeys = list(exterior1.keys())
-    p1ekeysn = len(p1ekeys)
+    p1ekeysn = len(p1ekeys)-1
     posi = random.randint(0,p1ekeysn)
     enode1 = p1ekeys[posi]
 
     ## pick a position around complex2
     p2ekeys = list(exterior2.keys())
-    p2ekeysn = len(p2ekeys)
+    p2ekeysn = len(p2ekeys)-1
     pos2i = random.randint(0,p2ekeysn)
     enode2 = p2ekeys[pos2i]
+    first = True
     if random.random() >= .5:
         first = True
     else:
@@ -320,16 +327,17 @@ def getbonds(pack1,pack2):
     if border == 2:
         nnode1 = None
         if first:
-            nnode1 = olabel[enode1]['neighbors'][0]
+            nnode1 = olabel1[enode1]['neighbors'][0]
         else:
-            nnodes1 = olabel[enode1]['neighbors']
+            nnodes1 = olabel1[enode1]['neighbors']
             nnodes1len = len(nnodes1)
             nnode1 = nnodes1[nnodes1len-1]
         nnode2 = None
         if first:
-            nnode2 = olabel[enode2]['neighbors'][0]
+            nnode2 = olabel2[enode2]['neighbors'][0]
         else:
-            nnodes2 = olabel[enode2]['neighbors']
+            nnodes2 = olabel2[enode2]['neighbors']
+            print(nnodes2)
             nnodes2len = len(nnodes2)
             nnode2 = nnodes2[nnodes2len-1]
         t1 = olabel1[enode1]['identifier'] == 0
@@ -375,22 +383,31 @@ def getbonds(pack1,pack2):
             nnode7 = getnnode(nnode2, enode1, olabel1)
             nnode8 = getnnode(nnode4, enode2, olabel2)
             rmap[nnode7] = nnode8            
-     return rmap       
+    return rmap       
         
 interior1, exterior1,olabel1 = {},{},{}
 interior2, exterior2,olabel2 = {},{},{}
 
-hex2c(interior1,exterior1,olabel1)
-hex2c(interior2,exterior2,olabel2)
-## shift pack2 labeling, so as not to conflict with pack1
-interior2,exterior2,olabel2 = hexshiftplabel(interior2, exterior2,olabel2)
+##hex2c(interior1,exterior1,olabel1)
+##hex2c(interior2,exterior2,olabel2)
+#### shift pack2 labeling, so as not to conflict with pack1
+##interior2,exterior2,olabel2 = hexshiftplabel(interior2, exterior2,olabel2)
+##pack1 = (interior1,exterior1,olabel1)
+##pack2 = (interior2,exterior2,olabel2)
+##
+#### In this case, bottom of pack1 is indexed as 7,6,13,12
+#### top of pack2 is indexed originally 4,5,9,10 or with reindexing + 13 units
+#### 17,18,22,23
+##igroup = {7:17,6:18,13:22,12:23}
+#### connect packs
+##connect(pack1,pack2,igroup)
+## connected packs are assigned to pack1 so done
+
+
+hexc(interior1,exterior1,olabel1,1)
+hexc(interior2,exterior2,olabel2,2)
+interior2,exterior2,olabel2 = shiftplabel(interior2, exterior2,olabel2)
 pack1 = (interior1,exterior1,olabel1)
 pack2 = (interior2,exterior2,olabel2)
-
-## In this case, bottom of pack1 is indexed as 7,6,13,12
-## top of pack2 is indexed originally 4,5,9,10 or with reindexing + 13 units
-## 17,18,22,23
-igroup = {7:17,6:18,13:22,12:23}
-## connect packs
+igroup = getbonds(pack1,pack2)
 connect(pack1,pack2,igroup)
-## connected packs are assigned to pack1 so done
