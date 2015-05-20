@@ -281,14 +281,24 @@ def connect(pack1,pack2,igroup):
 ## connect on a node boundary appropriately
 
 ## build random connections but need a test to confirm bond type
+def getnnode(node, nnode, olabel):
+    neighbors = olabel[node]['neighbors']
+    nlen = len(neighbors)
+    if nnode == neighbors[0]:
+        return neighbors[nlen-1]
+    else:
+        return neighbors[0]
+    
 def getbonds(pack1,pack2):
+    
     interior1,exterior1,olabel1 = pack1
     interior2,exterior2,olabel2 = pack2
+    rmap = {}
     ## generate random bond type
     if random.random() >= .5:
         border = 2
     else:
-        border = 1
+        border = 3
     ## pick a position around complex1
     p1ekeys = list(exterior1.keys())
     p1ekeysn = len(p1ekeys)
@@ -296,11 +306,77 @@ def getbonds(pack1,pack2):
     enode1 = p1ekeys[posi]
 
     ## pick a position around complex2
-    p1ekeys = list(exterior1.keys())
-    p1ekeysn = len(p1ekeys)
-    posi = random.randint(0,p1ekeysn)
-    enode1 = p1ekeys[posi]
-    
+    p2ekeys = list(exterior2.keys())
+    p2ekeysn = len(p2ekeys)
+    pos2i = random.randint(0,p2ekeysn)
+    enode2 = p2ekeys[pos2i]
+    if random.random() >= .5:
+        first = True
+    else:
+        first = False
+    ## if the bond type is double then we check for a triple bond
+    ## requirement (namely, that a position isn't an inter primitive
+    ## bond order node).
+    if border == 2:
+        nnode1 = None
+        if first:
+            nnode1 = olabel[enode1]['neighbors'][0]
+        else:
+            nnodes1 = olabel[enode1]['neighbors']
+            nnodes1len = len(nnodes1)
+            nnode1 = nnodes1[nnodes1len-1]
+        nnode2 = None
+        if first:
+            nnode2 = olabel[enode2]['neighbors'][0]
+        else:
+            nnodes2 = olabel[enode2]['neighbors']
+            nnodes2len = len(nnodes2)
+            nnode2 = nnodes2[nnodes2len-1]
+        t1 = olabel1[enode1]['identifier'] == 0
+        t2 = olabel1[nnode1]['identifier'] == 0
+        t3 = olabel2[enode2]['identifier'] == 0
+        t4 = olabel2[enode2]['identifier'] == 0
+        rmap[enode1] = enode2
+        rmap[nnode1] = nnode2
+        if t1 or t2 or t3 or t4:
+            ## require a triple bond order
+            ## enode1 is mapped to enode2
+            ## nnode1 is mapped to nnode2
+            ## prioritize t1 or t3 bonds firstly
+            if t1 or t3:
+                nnode3 = getnnode(enode1, nnode1, olabel1)
+                nnode4 = getnnode(enode2, nnode2, olabel2)
+                rmap[nnode3] = nnode4
+            else:
+                nnode3 = getnnode(nnode1, enode1, olabel1)
+                nnode4 = getnnode(nnode2, enode2, olabel2)
+                rmap[nnode3] = nnode4                
+    else:
+        ## we still check the bond order of the end nodes in either direction
+        ## to ensure that we don't have inter primitive bond order node
+        ## we can have either a quadratic or quintic order bond type
+        ## required here.  
+        nnode1 = olabel1[enode1]['neighbors'][0]
+        nnode2 = getnnode(enode1, nnode1, olabel1)
+        nnode3 = olabel2[enode2]['neighbors'][0]
+        nnode4 = getnnode(enode2, nnode2, olabel2)
+        rmap[enode1] = enode2
+        rmap[nnode1] = nnode3
+        rmap[nnode2] = nnode4
+        t1 = olabel1[nnode1]['identifier'] == 0
+        t2 = olabel1[nnode2]['identifier'] == 0
+        t3 = olabel2[nnode3]['identifier'] == 0
+        t4 = olabel2[nnode4]['identifier'] == 0
+        if t1 or t3:
+            nnode5 = getnnode(nnode1, enode1, olabel1)
+            nnode6 = getnnode(nnode3, enode2, olabel2)
+            rmap[nnode5] = nnode6
+        if t2 or t4:
+            nnode7 = getnnode(nnode2, enode1, olabel1)
+            nnode8 = getnnode(nnode4, enode2, olabel2)
+            rmap[nnode7] = nnode8            
+     return rmap       
+        
 interior1, exterior1,olabel1 = {},{},{}
 interior2, exterior2,olabel2 = {},{},{}
 
