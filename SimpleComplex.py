@@ -499,7 +499,11 @@ for i in range(ComplexSize):
         igroup = getbonds(packs[0],packs[i])
         connect(packs[0],packs[i],igroup)
         ##prevlen = len(packs[0])
-    prevlen = len(packs[0][2])
+        prevlen += len(packs[i][2])
+    else:
+        prevlen = len(packs[0][2])
     print(packs[0])
+    print('previous length: ', prevlen)
+    print('Igroup: ', igroup)
     
 cpack = CirclePack(interior1,exterior1)        
