@@ -289,6 +289,21 @@ def connect(pack1,pack2,igroup, border = None):
         igrouprev[igroup[i]] = i
     ## now add  pack2 nodes (except connectors), need also update labels
     remove2 = []
+    appendict = {}
+    for i in border:
+        ## check for triple bond non zero center node
+        ## That is only where center node is shared all other nodes
+        ## in such bond are independent.  Important to check this
+        ## since a triple bond non zero center node leads to
+        ## special appending or inserting of nodes in such bonding
+        ## from pack1 to pack2.  Usually for all other bonds we
+        ## transfer pack2 to pack1 or append insert nodes from
+        ## pack2 to pack1 but not to nodes specifically in pack2 from pack1
+        if len(border[i]) == 3:
+            bl,bc,br = border[i]
+            if olabel1[i]['identifier'] == 0:
+                appendict[igroup[bl]] = None
+                appendict[igroup[br]] = None
     for i in igroup:
         appen = None
         remove = []
@@ -340,6 +355,10 @@ def connect(pack1,pack2,igroup, border = None):
                     remove2.append(igroup[bl])
                 if not igroup[br] in remove2:
                     remove2.append(igroup[br])
+                if igroup[bl] in appendict:
+                    appendict[igroup[bl]] = not appen
+                if igroup[br] in appendict:
+                    appendict[igroup[br]] = not appen
         
     for i in olabel2:
         rdict = {}
@@ -358,6 +377,13 @@ def connect(pack1,pack2,igroup, border = None):
 ##                    print('cyclec: ', cyclec)
 ##                    print(type(cyclec))
                     cyclec[jindex] = igrouprev[j]
+            if i in appendict:
+                if appendict[i]:
+                    cyclec.append(igrouprev[i])
+                else:
+                    ncyclec = [igrouprev[i]]
+                    ncyclec += cyclec
+                    cyclec = ncyclec
             rdict['neighbors'] = cyclec
             rdict['identifier'] = olabel2[i]['identifier']
             olabel1[i] = rdict
@@ -427,6 +453,9 @@ def connect(pack1,pack2,igroup, border = None):
         ## check for complete cycles
         if checkcyclewalk(i, olabel1):
             interior1[i]= olabel1[i]['neighbors']
+            print('complete cycle')
+            print(olabel1[i]['type'])
+            print(i)
             olabel1[i]['type'] = 'i'
             del exterior1[i]
         else:
@@ -523,7 +552,7 @@ def getbonds(pack1,pack2):
                 if first:
                     bordermap[nnode1] = [nnode1,enode1]
                     bordermap[enode1] = [nnode1,enode1,nnode3]
-                    bordermap[enode3] = [enode1,nnode3]
+                    bordermap[nnode3] = [enode1,nnode3]
                 else:
                     bordermap[nnode1] = [enode1,nnode1]
                     bordermap[enode1] = [nnode3,enode1,nnode1]
