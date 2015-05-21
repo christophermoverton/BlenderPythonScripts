@@ -1,6 +1,6 @@
 import math
 import random
-import CirclePack
+##import CirclePack
 
 
 DimX = 9
@@ -270,7 +270,7 @@ def checkcyclewalk(index, label):
 ## *****************************
 ##def order
 
-def connect(pack1,pack2,igroup):
+def connect(pack1,pack2,igroup, border = None):
     interior1,exterior1,olabel1 = pack1
     interior2,exterior2,olabel2 = pack2
     # igroup is an index correspondence for interpack connections
@@ -288,15 +288,72 @@ def connect(pack1,pack2,igroup):
     for i in igroup:
         igrouprev[igroup[i]] = i
     ## now add  pack2 nodes (except connectors), need also update labels
+    remove2 = []
+    for i in igroup:
+        appen = None
+        remove = []
+        if border == None:
+            for n in olabel2[igroup[i]]['neighbors']:
+                if n in igvalues:  
+                    if appen == None:
+                        print('i from igroup: ', i)
+                        print('olabel1[i]neighbors: ', olabel1[i]['neighbors'])
+                        if olabel1[i]['neighbors'].index(igrouprev[n]) == 0:
+                            appen = False
+                        else:
+                            appen = True
+                    remove.append(n)
+        else:
+            bset = border[i] ## bond set
+            if len(bset) == 3:
+                ## triple bond i is always center
+                ## technically either append or insert fine
+                appen = True
+                ## check that primary bond node i isn't a base zero order bond
+                ## if it is then we remove neighbor 2 nodes on the bset
+                ## else we don't...that is a distinction between the triple
+                ## bond set.  When it is a triple bond formed on the a non
+                ## inter composite complex node, then the neighboring nodes
+                ## are not shared to common nodes for the triple bond.
+                ## When the are foremd on a inter composite complex node, then
+                ## they are shared.  For example, A triple bond formed
+                ## with only one shared node (the center of the triple) versus
+                ## a triple bond with all three nodes in the bond shared.
+                bl,bc,br = bset
+                if olabel1[i]['identifier'] == 0:
+                    if not igroup[bl] in remove2:
+                        remove2.append(igroup[bl])
+                    if not igroup[br] in remove2:
+                        remove2.append(igroup[br])
+                    if not igroup[bc] in remove2:
+                        remove2.append(igroup[bc])
+                else:
+                    if not igroup[bc] in remove2:
+                        remove2.append(igroup[bc])
+            else:
+                bl,br = bset
+                if br == i:
+                    appen = False
+                else:
+                    appen = True
+                if not igroup[bl] in remove2:
+                    remove2.append(igroup[bl])
+                if not igroup[br] in remove2:
+                    remove2.append(igroup[br])
+        
     for i in olabel2:
         rdict = {}
         update = []
-        if not i in igvalues:
+        
+        if not i in remove2: ## originally igvalues:
             rdict['type'] = olabel2[i]['type']
             cycle = olabel2[i]['neighbors']
             cyclec = cycle[0:len(cycle)]
-            for j in igvalues:
+##            for j in igvalues:
+##                if j in cyclec:
+            for j in remove2:
                 if j in cyclec:
+            
                     jindex = cyclec.index(j)
 ##                    print('cyclec: ', cyclec)
 ##                    print(type(cyclec))
@@ -312,23 +369,61 @@ def connect(pack1,pack2,igroup):
     for i in igroup:
         appen = None
         remove = []
-        for n in olabel2[igroup[i]]['neighbors']:
-            if n in igvalues:  
-                if appen == None:
-                    if olabel1[i]['neighbors'].index(igrouprev[n]) == 0:
-                        appen = False
-                    else:
-                        appen = True
-                remove.append(n)
+        if border == None:
+            for n in olabel2[igroup[i]]['neighbors']:
+                if n in igvalues:  
+                    if appen == None:
+                        print('i from igroup: ', i)
+                        print('olabel1[i]neighbors: ', olabel1[i]['neighbors'])
+                        if olabel1[i]['neighbors'].index(igrouprev[n]) == 0:
+                            appen = False
+                        else:
+                            appen = True
+                    remove.append(n)
+        else:
+            bset = border[i] ## bond set
+            if len(bset) == 3:
+                ## triple bond i is always center
+                ## technically either append or insert fine
+                appen = True
+                ## check that primary bond node i isn't a base zero order bond
+                ## if it is then we remove neighbor 2 nodes on the bset
+                ## else we don't...that is a distinction between the triple
+                ## bond set.  When it is a triple bond formed on the a non
+                ## inter composite complex node, then the neighboring nodes
+                ## are not shared to common nodes for the triple bond.
+                ## When the are foremd on a inter composite complex node, then
+                ## they are shared.  For example, A triple bond formed
+                ## with only one shared node (the center of the triple) versus
+                ## a triple bond with all three nodes in the bond shared.
+                bl,bc,br = bset
+                if olabel1[i]['identifier'] == 0:
+                    remove.append(igroup[bl])
+                    remove.append(igroup[br])
+                    remove.append(igroup[bc])
+                else:
+                    remove.append(igroup[bc])
+            else:
+                bl,br = bset
+                if br == i:
+                    appen = False
+                else:
+                    appen = True
+                remove.append(igroup[bl])
+                remove.append(igroup[br])
         n2list = olabel2[igroup[i]]['neighbors']
         n2listc = n2list[0:len(n2list)]
-        for r in remove:
-            n2listc.remove(r)
+        for r in remove2:
+            if r in n2listc:
+                
+                n2listc.remove(r)
         if appen:
             olabel1[i]['neighbors']+= n2listc
         else:
             n2listc += olabel1[i]['neighbors']
             olabel1[i]['neighbors'] = n2listc
+
+        print(remove2)
         ## check for complete cycles
         if checkcyclewalk(i, olabel1):
             interior1[i]= olabel1[i]['neighbors']
@@ -366,6 +461,7 @@ def getbonds(pack1,pack2):
     interior1,exterior1,olabel1 = pack1
     interior2,exterior2,olabel2 = pack2
     rmap = {}
+    bordermap = {}  ## on the primary pack1 
     ## generate random bond type
     if random.random() >= .5:
         border = 2
@@ -392,12 +488,17 @@ def getbonds(pack1,pack2):
     ## bond order node).
     if border == 2:
         nnode1 = None
+        print('hit border2')
         if first:
             nnode1 = olabel1[enode1]['neighbors'][0]
+            bordermap[nnode1] = [nnode1,enode1]
+            bordermap[enode1] = [nnode1,enode1]
         else:
             nnodes1 = olabel1[enode1]['neighbors']
             nnodes1len = len(nnodes1)
             nnode1 = nnodes1[nnodes1len-1]
+            bordermap[nnode1] = [enode1,nnode1]
+            bordermap[enode1] = [enode1,nnode1]
         nnode2 = None
         if first:
             nnode2 = olabel2[enode2]['neighbors'][0]
@@ -419,21 +520,38 @@ def getbonds(pack1,pack2):
             ## prioritize t1 or t3 bonds firstly
             if t1 or t3:
                 nnode3 = getnnode(enode1, nnode1, olabel1)
+                if first:
+                    bordermap[nnode1] = [nnode1,enode1]
+                    bordermap[enode1] = [nnode1,enode1,nnode3]
+                    bordermap[enode3] = [enode1,nnode3]
+                else:
+                    bordermap[nnode1] = [enode1,nnode1]
+                    bordermap[enode1] = [nnode3,enode1,nnode1]
+                    bordermap[nnode3] = [nnode3,enode1]
                 nnode4 = getnnode(enode2, nnode2, olabel2)
                 rmap[nnode3] = nnode4
             else:
                 nnode3 = getnnode(nnode1, enode1, olabel1)
+                if first:
+                    bordermap[nnode1] = [nnode3,nnode1,enode1]
+                    bordermap[enode1] = [nnode1,enode1]
+                    bordermap[nnode3] = [nnode3,nnode1]
+                else:
+                    bordermap[nnode1] = [enode1,nnode1,nnode3]
+                    bordermap[enode1] = [enode1,nnode1]
+                    bordermap[nnode3] = [nnode1,nnode3]
                 nnode4 = getnnode(nnode2, enode2, olabel2)
                 rmap[nnode3] = nnode4                
     else:
         ## we still check the bond order of the end nodes in either direction
         ## to ensure that we don't have inter primitive bond order node
         ## we can have either a 4 or 5 order bond type
-        ## required here.  
+        ## required here.
+        print('hit border3')
         nnode1 = olabel1[enode1]['neighbors'][0]
         nnode2 = getnnode(enode1, nnode1, olabel1)
         nnode3 = olabel2[enode2]['neighbors'][0]
-        nnode4 = getnnode(enode2, nnode2, olabel2)
+        nnode4 = getnnode(enode2, nnode3, olabel2)
         rmap[enode1] = enode2
         rmap[nnode1] = nnode3
         rmap[nnode2] = nnode4
@@ -441,15 +559,49 @@ def getbonds(pack1,pack2):
         t2 = olabel1[nnode2]['identifier'] == 0
         t3 = olabel2[nnode3]['identifier'] == 0
         t4 = olabel2[nnode4]['identifier'] == 0
-        if t1 or t3:
+        t5 = len(olabel2) > 4
+        t6 = len(olabel2) > 5
+        if first:
+            bordermap[nnode1] = [nnode1,enode1]
+            bordermap[enode1] = [nnode1,enode1,nnode2]
+            bordermap[nnode2] = [enode1,nnode2]
+        else:
+            bordermap[nnode1] = [enode1,nnode1]
+            bordermap[enode1] = [nnode2,enode1,nnode1]
+            bordermap[nnode2] = [nnode2,enode1]
+        if (t1 or t3) and t5:
             nnode5 = getnnode(nnode1, enode1, olabel1)
+            if first:
+                bordermap[nnode1] = [nnode5,nnode1,enode1]
+                bordermap[nnode5] = [nnode5,nnode1]
+##                bordermap[enode1] = (nnode1,enode1,nnode2)
+##                bordermap[enode2] = (enode1,nnode2)
+            else:
+                bordermap[nnode1] = [enode1,nnode1,nnode5]
+                bordermap[nnode5] = [nnode1,nnode5]
+##                bordermap[enode1] = (nnode2,enode1,nnode1)
+##                bordermap[enode2] = (nnode2,enode1)
             nnode6 = getnnode(nnode3, enode2, olabel2)
             rmap[nnode5] = nnode6
-        if t2 or t4:
+        if len(rmap) > 3:
+            t7 = t6
+        else:
+            t7 = t5
+        if (t2 or t4) and t5:
             nnode7 = getnnode(nnode2, enode1, olabel1)
+            if first:
+##                bordermap[nnode1] = (nnode1,enode1)
+##                bordermap[enode1] = (nnode1,enode1,nnode2)
+                bordermap[nnode2] = [enode1,nnode2,nnode7]
+                bordermap[nnode7] = [nnode2,nnode7]
+            else:
+##                bordermap[nnode1] = (enode1,nnode1)
+##                bordermap[enode1] = (nnode2,enode1,nnode1)
+                bordermap[nnode2] = [nnode7,nnode2,enode1]
+                bordermap[nnode7] = [nnode7,nnode2]
             nnode8 = getnnode(nnode4, enode2, olabel2)
             rmap[nnode7] = nnode8            
-    return rmap       
+    return (rmap, bordermap)      
         
 interior1, exterior1,olabel1 = {},{},{}
 interior2, exterior2,olabel2 = {},{},{}
@@ -470,13 +622,13 @@ interior2, exterior2,olabel2 = {},{},{}
 ## connected packs are assigned to pack1 so done
 
 
-hexc(interior1,exterior1,olabel1,1)
-hexc(interior2,exterior2,olabel2,2)
-interior2,exterior2,olabel2 = shiftplabel(interior2, exterior2,olabel2)
-pack1 = (interior1,exterior1,olabel1)
-pack2 = (interior2,exterior2,olabel2)
-igroup = getbonds(pack1,pack2)
-connect(pack1,pack2,igroup)
+##hexc(interior1,exterior1,olabel1,1)
+##hexc(interior2,exterior2,olabel2,2)
+##interior2,exterior2,olabel2 = shiftplabel(interior2, exterior2,olabel2)
+##pack1 = (interior1,exterior1,olabel1)
+##pack2 = (interior2,exterior2,olabel2)
+##igroup = getbonds(pack1,pack2)
+##connect(pack1,pack2,igroup)
 
 ##***********************************
 interior1, exterior1, olabel1 = {},{},{}
@@ -496,8 +648,10 @@ for i in range(ComplexSize):
         interior,exterior,olabel = shiftplabel(interior, exterior,
                                                olabel,prevlen)
         packs[i] = [interior,exterior,olabel]
-        igroup = getbonds(packs[0],packs[i])
-        connect(packs[0],packs[i],igroup)
+        print('hello')
+        bonddat = getbonds(packs[0],packs[i])
+        igroup, border = bonddat
+        connect(packs[0],packs[i],igroup, border)
         ##prevlen = len(packs[0])
         prevlen += len(packs[i][2])
     else:
@@ -506,4 +660,4 @@ for i in range(ComplexSize):
     print('previous length: ', prevlen)
     print('Igroup: ', igroup)
     
-cpack = CirclePack(interior1,exterior1)        
+##cpack = CirclePack(interior1,exterior1)        
