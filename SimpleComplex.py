@@ -290,6 +290,7 @@ def connect(pack1,pack2,igroup, border = None):
     ## now add  pack2 nodes (except connectors), need also update labels
     remove2 = []
     appendict = {}
+    appendictrev = []
     for i in border:
         ## check for triple bond non zero center node
         ## That is only where center node is shared all other nodes
@@ -304,6 +305,7 @@ def connect(pack1,pack2,igroup, border = None):
             if olabel1[i]['identifier'] == 0:
                 appendict[igroup[bl]] = None
                 appendict[igroup[br]] = None
+                appendictrev += [bl,br]
     for i in igroup:
         appen = None
         remove = []
@@ -348,9 +350,9 @@ def connect(pack1,pack2,igroup, border = None):
             else:
                 bl,br = bset
                 if br == i:
-                    appen = False
-                else:
                     appen = True
+                else:
+                    appen = False
                 if not igroup[bl] in remove2:
                     remove2.append(igroup[bl])
                 if not igroup[br] in remove2:
@@ -439,15 +441,26 @@ def connect(pack1,pack2,igroup, border = None):
                 remove.append(igroup[br])
         n2list = olabel2[igroup[i]]['neighbors']
         n2listc = n2list[0:len(n2list)]
+        
         for r in remove2:
             if r in n2listc:
                 
                 n2listc.remove(r)
         if appen:
-            olabel1[i]['neighbors']+= n2listc
+            ## distinction is needed here for shared versus non shared nodes
+            ## in the special triple bond case (mentioned above)
+            if i in appendictrev:
+                olabel1[i]['neighbors'] += [igroup[i]]
+            else:
+                olabel1[i]['neighbors']+= n2listc
         else:
-            n2listc += olabel1[i]['neighbors']
-            olabel1[i]['neighbors'] = n2listc
+            if i in appendictrev:
+                ncycle = [igroup[i]]
+                ncycle += olabel1[i]['neighbors']
+                olabel1[i]['neighbors'] = ncycle
+            else:
+                n2listc += olabel1[i]['neighbors']
+                olabel1[i]['neighbors'] = n2listc
 
         print(remove2)
         ## check for complete cycles
@@ -478,9 +491,8 @@ def connect(pack1,pack2,igroup, border = None):
 ## ******INTERNAL****************
 def getnnode(node, nnode, olabel):
     neighbors = olabel[node]['neighbors']
-    nlen = len(neighbors)
     if nnode == neighbors[0]:
-        return neighbors[nlen-1]
+        return neighbors[-1]
     else:
         return neighbors[0]
 ## ****************************
@@ -520,22 +532,18 @@ def getbonds(pack1,pack2):
         print('hit border2')
         if first:
             nnode1 = olabel1[enode1]['neighbors'][0]
-            bordermap[nnode1] = [nnode1,enode1]
-            bordermap[enode1] = [nnode1,enode1]
-        else:
-            nnodes1 = olabel1[enode1]['neighbors']
-            nnodes1len = len(nnodes1)
-            nnode1 = nnodes1[nnodes1len-1]
             bordermap[nnode1] = [enode1,nnode1]
             bordermap[enode1] = [enode1,nnode1]
+        else:
+            nnode1 = olabel1[enode1]['neighbors'][-1]
+            bordermap[nnode1] = [nnode1,enode1]
+            bordermap[enode1] = [nnode1,enode1]
         nnode2 = None
         if first:
-            nnode2 = olabel2[enode2]['neighbors'][0]
+            nnode2 = olabel2[enode2]['neighbors'][-1]
         else:
-            nnodes2 = olabel2[enode2]['neighbors']
-            print(nnodes2)
-            nnodes2len = len(nnodes2)
-            nnode2 = nnodes2[nnodes2len-1]
+            nnode2 = olabel2[enode2]['neighbors'][0]
+
         t1 = olabel1[enode1]['identifier'] == 0
         t2 = olabel1[nnode1]['identifier'] == 0
         t3 = olabel2[enode2]['identifier'] == 0
@@ -550,25 +558,25 @@ def getbonds(pack1,pack2):
             if t1 or t3:
                 nnode3 = getnnode(enode1, nnode1, olabel1)
                 if first:
-                    bordermap[nnode1] = [nnode1,enode1]
-                    bordermap[enode1] = [nnode1,enode1,nnode3]
-                    bordermap[nnode3] = [enode1,nnode3]
-                else:
                     bordermap[nnode1] = [enode1,nnode1]
                     bordermap[enode1] = [nnode3,enode1,nnode1]
                     bordermap[nnode3] = [nnode3,enode1]
+                else:
+                    bordermap[nnode1] = [nnode1,enode1]
+                    bordermap[enode1] = [nnode1,enode1,nnode3]
+                    bordermap[nnode3] = [enode1,nnode3]
                 nnode4 = getnnode(enode2, nnode2, olabel2)
                 rmap[nnode3] = nnode4
             else:
                 nnode3 = getnnode(nnode1, enode1, olabel1)
                 if first:
-                    bordermap[nnode1] = [nnode3,nnode1,enode1]
-                    bordermap[enode1] = [nnode1,enode1]
-                    bordermap[nnode3] = [nnode3,nnode1]
-                else:
                     bordermap[nnode1] = [enode1,nnode1,nnode3]
                     bordermap[enode1] = [enode1,nnode1]
                     bordermap[nnode3] = [nnode1,nnode3]
+                else:
+                    bordermap[nnode1] = [nnode3,nnode1,enode1]
+                    bordermap[enode1] = [nnode1,enode1]
+                    bordermap[nnode3] = [nnode3,nnode1]
                 nnode4 = getnnode(nnode2, enode2, olabel2)
                 rmap[nnode3] = nnode4                
     else:
@@ -577,10 +585,16 @@ def getbonds(pack1,pack2):
         ## we can have either a 4 or 5 order bond type
         ## required here.
         print('hit border3')
-        nnode1 = olabel1[enode1]['neighbors'][0]
-        nnode2 = getnnode(enode1, nnode1, olabel1)
-        nnode3 = olabel2[enode2]['neighbors'][0]
-        nnode4 = getnnode(enode2, nnode3, olabel2)
+        if first:
+            nnode1 = olabel1[enode1]['neighbors'][0]
+            nnode2 = getnnode(enode1, nnode1, olabel1)
+            nnode3 = olabel2[enode2]['neighbors'][-1]
+            nnode4 = getnnode(enode2, nnode3, olabel2)
+        else:
+            nnode1 = olabel1[enode1]['neighbors'][-1]
+            nnode2 = getnnode(enode1, nnode1, olabel1)
+            nnode3 = olabel2[enode2]['neighbors'][0]
+            nnode4 = getnnode(enode2, nnode3, olabel2)            
         rmap[enode1] = enode2
         rmap[nnode1] = nnode3
         rmap[nnode2] = nnode4
@@ -591,23 +605,23 @@ def getbonds(pack1,pack2):
         t5 = len(olabel2) > 4
         t6 = len(olabel2) > 5
         if first:
-            bordermap[nnode1] = [nnode1,enode1]
-            bordermap[enode1] = [nnode1,enode1,nnode2]
-            bordermap[nnode2] = [enode1,nnode2]
-        else:
             bordermap[nnode1] = [enode1,nnode1]
             bordermap[enode1] = [nnode2,enode1,nnode1]
             bordermap[nnode2] = [nnode2,enode1]
+        else:
+            bordermap[nnode1] = [nnode1,enode1]
+            bordermap[enode1] = [nnode1,enode1,nnode2]
+            bordermap[nnode2] = [enode1,nnode2]
         if (t1 or t3) and t5:
             nnode5 = getnnode(nnode1, enode1, olabel1)
             if first:
-                bordermap[nnode1] = [nnode5,nnode1,enode1]
-                bordermap[nnode5] = [nnode5,nnode1]
+                bordermap[nnode1] = [enode1,nnode1,nnode5]
+                bordermap[nnode5] = [nnode1,nnode5]
 ##                bordermap[enode1] = (nnode1,enode1,nnode2)
 ##                bordermap[enode2] = (enode1,nnode2)
             else:
-                bordermap[nnode1] = [enode1,nnode1,nnode5]
-                bordermap[nnode5] = [nnode1,nnode5]
+                bordermap[nnode1] = [nnode5,nnode1,enode1]
+                bordermap[nnode5] = [nnode5,nnode1]
 ##                bordermap[enode1] = (nnode2,enode1,nnode1)
 ##                bordermap[enode2] = (nnode2,enode1)
             nnode6 = getnnode(nnode3, enode2, olabel2)
@@ -621,13 +635,13 @@ def getbonds(pack1,pack2):
             if first:
 ##                bordermap[nnode1] = (nnode1,enode1)
 ##                bordermap[enode1] = (nnode1,enode1,nnode2)
-                bordermap[nnode2] = [enode1,nnode2,nnode7]
-                bordermap[nnode7] = [nnode2,nnode7]
+                bordermap[nnode2] = [nnode7,nnode2,enode1]
+                bordermap[nnode7] = [nnode7,nnode2]
             else:
 ##                bordermap[nnode1] = (enode1,nnode1)
 ##                bordermap[enode1] = (nnode2,enode1,nnode1)
-                bordermap[nnode2] = [nnode7,nnode2,enode1]
-                bordermap[nnode7] = [nnode7,nnode2]
+                bordermap[nnode2] = [enode1,nnode2,nnode7]
+                bordermap[nnode7] = [nnode2,nnode7]
             nnode8 = getnnode(nnode4, enode2, olabel2)
             rmap[nnode7] = nnode8            
     return (rmap, bordermap)      
@@ -666,6 +680,7 @@ for i in range(ComplexSize):
     pack = [interior1.copy(),exterior1.copy(),olabel1.copy()]
     packs.append(pack)
 prevlen = 0
+mbonds = []
 for i in range(ComplexSize):
     igroup = {}
     basei = random.randint(0,len(RandomBase)-1)
@@ -677,9 +692,13 @@ for i in range(ComplexSize):
         interior,exterior,olabel = shiftplabel(interior, exterior,
                                                olabel,prevlen)
         packs[i] = [interior,exterior,olabel]
-        print('hello')
         bonddat = getbonds(packs[0],packs[i])
         igroup, border = bonddat
+        print('Igroup: ', igroup)
+        print('border: ', border)
+        for b in igroup:
+            if packs[0][2][b]['type'] == 'i':
+                mbonds.append(b)
         connect(packs[0],packs[i],igroup, border)
         ##prevlen = len(packs[0])
         prevlen += len(packs[i][2])
@@ -687,6 +706,5 @@ for i in range(ComplexSize):
         prevlen = len(packs[0][2])
     print(packs[0])
     print('previous length: ', prevlen)
-    print('Igroup: ', igroup)
     
 ##cpack = CirclePack(interior1,exterior1)        
