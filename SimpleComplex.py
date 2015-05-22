@@ -298,8 +298,8 @@ def extintconvpass(exterior,interior,olabel):
         t2 = exteriorcheck(n2,olabel)
         if not t1 and not t2:
             olabel[node]['type'] = 'i'
-        del exterior[node]
-        interior[node] = olabel[node]['neighbors']
+            del exterior[node]
+            interior[node] = olabel[node]['neighbors']
 
 ## ****************************
 
@@ -518,7 +518,7 @@ def connect(pack1,pack2,igroup, border = None):
     ## a final pass on the exterior nodes to account for nodes
     ## that are isolated (between interior nodes) but are also
     ## classified exterior.  These are converted to interior nodes
-    ##extintconvpass(exterior1,interior1,olabel1)
+    extintconvpass(exterior1,interior1,olabel1)
 
 ## test build 2 triple bond hex, shift the labels of one set, and then
 ## connect on a node boundary appropriately
