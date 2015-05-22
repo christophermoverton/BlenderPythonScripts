@@ -6,10 +6,10 @@ import random
 DimX = 9
 DimY = 9
 global VARIANCE
-VARIANCE = .3
-ComplexSize = 20  ## number of Base Complexes to form a composite Union
-MaxBaseSize = 8 ## Max n-Gon size
-CenterBase = 6 ## The median Base Complex for a Random Base Complex generation
+VARIANCE = .1
+ComplexSize = 10  ## number of Base Complexes to form a composite Union
+MaxBaseSize = 7 ## Max n-Gon size
+CenterBase = 7 ## The median Base Complex for a Random Base Complex generation
                ## set.  Should always be less than or equal to MaxBaseSize.
                ##  3 <= CenterBase <= MaxBaseSize where CenterBase is an int.
 BVariance = 1.0  ## values range from 0 to 1.0 (full)  This means the
@@ -518,7 +518,7 @@ def connect(pack1,pack2,igroup, border = None):
     ## a final pass on the exterior nodes to account for nodes
     ## that are isolated (between interior nodes) but are also
     ## classified exterior.  These are converted to interior nodes
-    extintconvpass(exterior1,interior1,olabel1)
+    ##extintconvpass(exterior1,interior1,olabel1)
 
 ## test build 2 triple bond hex, shift the labels of one set, and then
 ## connect on a node boundary appropriately
@@ -539,6 +539,7 @@ def getrandomexteriors(pack1,pack2):
 ##    else:
 ##        first = False
     first = True
+    border = 2  ## checking doubles only
     enode2 = getrandomexterior(exterior2)
     
     nnode2f = olabel2[enode2]['neighbors'][-1]
@@ -644,28 +645,33 @@ def getbonds(pack1,pack2):
             ## prioritize t1 or t3 bonds firstly
             if t1 or t3:
                 nnode3 = getnnode(enode1, nnode1, olabel1)
-                if first:
+                ## make sure nnode3 is exterior
+                t5 = exteriorcheck(nnode3,olabel1)
+                if first and t5:
                     bordermap[nnode1] = [enode1,nnode1]
                     bordermap[enode1] = [nnode3,enode1,nnode1]
                     bordermap[nnode3] = [nnode3,enode1]
-                else:
+                elif not first and t5:
                     bordermap[nnode1] = [nnode1,enode1]
                     bordermap[enode1] = [nnode1,enode1,nnode3]
                     bordermap[nnode3] = [enode1,nnode3]
-                nnode4 = getnnode(enode2, nnode2, olabel2)
-                rmap[nnode3] = nnode4
+                if t5:
+                    nnode4 = getnnode(enode2, nnode2, olabel2)
+                    rmap[nnode3] = nnode4
             else:
                 nnode3 = getnnode(nnode1, enode1, olabel1)
-                if first:
+                t5 = exteriorcheck(nnode3,olabel1)
+                if first and t5:
                     bordermap[nnode1] = [enode1,nnode1,nnode3]
                     bordermap[enode1] = [enode1,nnode1]
                     bordermap[nnode3] = [nnode1,nnode3]
-                else:
+                elif not first and t5:
                     bordermap[nnode1] = [nnode3,nnode1,enode1]
                     bordermap[enode1] = [nnode1,enode1]
                     bordermap[nnode3] = [nnode3,nnode1]
-                nnode4 = getnnode(nnode2, enode2, olabel2)
-                rmap[nnode3] = nnode4                
+                if t5:
+                    nnode4 = getnnode(nnode2, enode2, olabel2)
+                    rmap[nnode3] = nnode4                
     else:
         ## we still check the bond order of the end nodes in either direction
         ## to ensure that we don't have inter primitive bond order node
@@ -699,38 +705,42 @@ def getbonds(pack1,pack2):
             bordermap[nnode1] = [nnode1,enode1]
             bordermap[enode1] = [nnode1,enode1,nnode2]
             bordermap[nnode2] = [enode1,nnode2]
-        if (t1 or t3) and t5:
-            nnode5 = getnnode(nnode1, enode1, olabel1)
-            if first:
-                bordermap[nnode1] = [enode1,nnode1,nnode5]
-                bordermap[nnode5] = [nnode1,nnode5]
-##                bordermap[enode1] = (nnode1,enode1,nnode2)
-##                bordermap[enode2] = (enode1,nnode2)
-            else:
-                bordermap[nnode1] = [nnode5,nnode1,enode1]
-                bordermap[nnode5] = [nnode5,nnode1]
-##                bordermap[enode1] = (nnode2,enode1,nnode1)
-##                bordermap[enode2] = (nnode2,enode1)
-            nnode6 = getnnode(nnode3, enode2, olabel2)
-            rmap[nnode5] = nnode6
-        if len(rmap) > 3:
-            t7 = t6
-        else:
-            t7 = t5
-        if (t2 or t4) and t5:
-            nnode7 = getnnode(nnode2, enode1, olabel1)
-            if first:
-##                bordermap[nnode1] = (nnode1,enode1)
-##                bordermap[enode1] = (nnode1,enode1,nnode2)
-                bordermap[nnode2] = [nnode7,nnode2,enode1]
-                bordermap[nnode7] = [nnode7,nnode2]
-            else:
-##                bordermap[nnode1] = (enode1,nnode1)
-##                bordermap[enode1] = (nnode2,enode1,nnode1)
-                bordermap[nnode2] = [enode1,nnode2,nnode7]
-                bordermap[nnode7] = [nnode2,nnode7]
-            nnode8 = getnnode(nnode4, enode2, olabel2)
-            rmap[nnode7] = nnode8            
+##        if (t1 or t3) and t5:
+##            nnode5 = getnnode(nnode1, enode1, olabel1)
+##            t7 = exteriorcheck(nnode5,olabel1)
+##            if first and t7:
+##                bordermap[nnode1] = [enode1,nnode1,nnode5]
+##                bordermap[nnode5] = [nnode1,nnode5]
+####                bordermap[enode1] = (nnode1,enode1,nnode2)
+####                bordermap[enode2] = (enode1,nnode2)
+##            elif not first and t7:
+##                bordermap[nnode1] = [nnode5,nnode1,enode1]
+##                bordermap[nnode5] = [nnode5,nnode1]
+####                bordermap[enode1] = (nnode2,enode1,nnode1)
+####                bordermap[enode2] = (nnode2,enode1)
+##            if t7:
+##                nnode6 = getnnode(nnode3, enode2, olabel2)
+##                rmap[nnode5] = nnode6
+##        if len(rmap) > 3:
+##            t7 = t6
+##        else:
+##            t7 = t5
+##        if (t2 or t4) and t5:
+##            nnode7 = getnnode(nnode2, enode1, olabel1)
+##            t7 = exteriorcheck(nnode7,olabel1)
+##            if first and t7:
+####                bordermap[nnode1] = (nnode1,enode1)
+####                bordermap[enode1] = (nnode1,enode1,nnode2)
+##                bordermap[nnode2] = [nnode7,nnode2,enode1]
+##                bordermap[nnode7] = [nnode7,nnode2]
+##            elif not first and t7:
+####                bordermap[nnode1] = (enode1,nnode1)
+####                bordermap[enode1] = (nnode2,enode1,nnode1)
+##                bordermap[nnode2] = [enode1,nnode2,nnode7]
+##                bordermap[nnode7] = [nnode2,nnode7]
+##            if t7:
+##                nnode8 = getnnode(nnode4, enode2, olabel2)
+##                rmap[nnode7] = nnode8            
     return (rmap, bordermap)      
         
 interior1, exterior1,olabel1 = {},{},{}
