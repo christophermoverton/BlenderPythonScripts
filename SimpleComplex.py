@@ -269,6 +269,39 @@ def checkcyclewalk(index, label):
         return False
 ## *****************************
 ##def order
+## ******INTERNAL****************
+def getnnode(node, nnode, olabel):
+    neighbors = olabel[node]['neighbors']
+    if nnode == neighbors[0]:
+        return neighbors[-1]
+    else:
+        return neighbors[0]
+
+def exteriorcheck(node,olabel):
+    if olabel[node]['type'] == 'e':
+        return True
+    else:
+        return False
+
+def getrandomexterior(exterior):
+    p1ekeys = list(exterior.keys())
+    p1ekeysn = len(p1ekeys)-1
+    posi = random.randint(0,p1ekeysn)
+    return p1ekeys[posi]
+
+def extintconvpass(exterior,interior,olabel):
+    exteriorkeys = list(exterior.keys())
+    for node in exteriorkeys:
+        n1 = olabel[node]['neighbors'][0]
+        n2 = olabel[node]['neighbors'][-1]
+        t1 = exteriorcheck(n1,olabel)
+        t2 = exteriorcheck(n2,olabel)
+        if not t1 and not t2:
+            olabel[node]['type'] = 'i'
+        del exterior[node]
+        interior[node] = olabel[node]['neighbors']
+
+## ****************************
 
 def connect(pack1,pack2,igroup, border = None):
     interior1,exterior1,olabel1 = pack1
@@ -482,20 +515,71 @@ def connect(pack1,pack2,igroup, border = None):
             exterior1[i] = exterior2[i]
         else:
             interior1[i] = olabel1[i]['neighbors']
+    ## a final pass on the exterior nodes to account for nodes
+    ## that are isolated (between interior nodes) but are also
+    ## classified exterior.  These are converted to interior nodes
+    ##extintconvpass(exterior1,interior1,olabel1)
 
 ## test build 2 triple bond hex, shift the labels of one set, and then
 ## connect on a node boundary appropriately
 
 ## build random connections but need a test to confirm bond type
-            
-## ******INTERNAL****************
-def getnnode(node, nnode, olabel):
-    neighbors = olabel[node]['neighbors']
-    if nnode == neighbors[0]:
-        return neighbors[-1]
+def getrandomexteriors(pack1,pack2):
+    interior1,exterior1,olabel1 = pack1
+    interior2,exterior2,olabel2 = pack2
+    exterior1c = exterior1.copy()
+    exterior2c = exterior2.copy()
+    maincheck = True
+    if random.random() >= .5:
+        border = 2
     else:
-        return neighbors[0]
-## ****************************
+        border = 3
+##    if random.random() >= .5:
+##        first = True
+##    else:
+##        first = False
+    first = True
+    enode2 = getrandomexterior(exterior2)
+    
+    nnode2f = olabel2[enode2]['neighbors'][-1]
+    
+    nnode2l = olabel2[enode2]['neighbors'][0]
+    nnode4f = getnnode(enode2, nnode2f, olabel2)
+    nnode4l = getnnode(enode2, nnode2l, olabel2)
+    while maincheck:
+        enode1 = getrandomexterior(exterior1c)
+        
+        nnode1f = olabel1[enode1]['neighbors'][0]
+        
+        nnode1l = olabel1[enode1]['neighbors'][-1]
+        nnode3f = getnnode(enode1, nnode1f, olabel1)
+        nnode3l = getnnode(enode1, nnode1l, olabel1)
+        if border == 2:
+            t1 = exteriorcheck(nnode1f,olabel1)
+            t2 = exteriorcheck(nnode1l,olabel1)
+            if  t1:
+                return (2,first,[[enode1,nnode1f],[enode2,nnode2f]])
+            elif t2:
+                return (2,not first,[[enode1,nnode1l],[enode2,nnode2l]])
+        else:
+            t1 = exteriorcheck(nnode1f,olabel1)
+            t2 = exteriorcheck(nnode1l,olabel1)
+            t3 = exteriorcheck(nnode3f,olabel1)
+            t4 = exteriorcheck(nnode3l,olabel1)
+            if t1 and t3:
+                return (3,first,[[enode1,nnode1f, nnode3f],
+                                 [enode2,nnode2f, nnode4f]])
+            elif t2 and t4:
+                return (3,not first,[[enode1,nnode1l, nnode3l],
+                                 [enode2,nnode2l, nnode4l]])
+            if t1:
+                return (2,first,[[enode1,nnode1f],[enode2,nnode2f]])
+            elif t2:
+                return (2,not first,[[enode1,nnode1l],[enode2,nnode2l]])
+        del exterior1c[enode1]
+        print('exterior: ', exterior1)
+        if len(exterior1c) == 0:
+            return (None,None,None)
     
 def getbonds(pack1,pack2):
     
@@ -503,27 +587,30 @@ def getbonds(pack1,pack2):
     interior2,exterior2,olabel2 = pack2
     rmap = {}
     bordermap = {}  ## on the primary pack1 
-    ## generate random bond type
-    if random.random() >= .5:
-        border = 2
-    else:
-        border = 3
-    ## pick a position around complex1
-    p1ekeys = list(exterior1.keys())
-    p1ekeysn = len(p1ekeys)-1
-    posi = random.randint(0,p1ekeysn)
-    enode1 = p1ekeys[posi]
-
-    ## pick a position around complex2
-    p2ekeys = list(exterior2.keys())
-    p2ekeysn = len(p2ekeys)-1
-    pos2i = random.randint(0,p2ekeysn)
-    enode2 = p2ekeys[pos2i]
-    first = True
-    if random.random() >= .5:
-        first = True
-    else:
-        first = False
+##    ## generate random bond type
+##    if random.random() >= .5:
+##        border = 2
+##    else:
+##        border = 3
+##    ## pick a position around complex1
+##    p1ekeys = list(exterior1.keys())
+##    p1ekeysn = len(p1ekeys)-1
+##    posi = random.randint(0,p1ekeysn)
+##    enode1 = p1ekeys[posi]
+##
+##    ## pick a position around complex2
+##    p2ekeys = list(exterior2.keys())
+##    p2ekeysn = len(p2ekeys)-1
+##    pos2i = random.randint(0,p2ekeysn)
+##    enode2 = p2ekeys[pos2i]
+##    first = True
+##    if random.random() >= .5:
+##        first = True
+##    else:
+##        first = False
+    border, first, rnodes = getrandomexteriors(pack1,pack2)
+    enode1 = rnodes[0][0]
+    enode2 = rnodes[1][0]
     ## if the bond type is double then we check for a triple bond
     ## requirement (namely, that a position isn't an inter primitive
     ## bond order node).
