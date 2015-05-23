@@ -7,7 +7,7 @@ DimX = 9
 DimY = 9
 global VARIANCE
 VARIANCE = .1
-ComplexSize = 10  ## number of Base Complexes to form a composite Union
+ComplexSize = 2  ## number of Base Complexes to form a composite Union
 MaxBaseSize = 7 ## Max n-Gon size
 CenterBase = 7 ## The median Base Complex for a Random Base Complex generation
                ## set.  Should always be less than or equal to MaxBaseSize.
@@ -300,6 +300,11 @@ def extintconvpass(exterior,interior,olabel):
             olabel[node]['type'] = 'i'
             del exterior[node]
             interior[node] = olabel[node]['neighbors']
+def zeronodecheck(node,olabel):
+    if olabel[node]['identifier'] == 0:
+        return True
+    else:
+        return False
 
 ## ****************************
 
@@ -335,7 +340,7 @@ def connect(pack1,pack2,igroup, border = None):
         ## pack2 to pack1 but not to nodes specifically in pack2 from pack1
         if len(border[i]) == 3:
             bl,bc,br = border[i]
-            if olabel1[i]['identifier'] == 0:
+            if olabel1[i]['identifier'] != 0:
                 appendict[igroup[bl]] = None
                 appendict[igroup[br]] = None
                 appendictrev += [bl,br]
@@ -467,9 +472,9 @@ def connect(pack1,pack2,igroup, border = None):
             else:
                 bl,br = bset
                 if br == i:
-                    appen = False
-                else:
                     appen = True
+                else:
+                    appen = False
                 remove.append(igroup[bl])
                 remove.append(igroup[br])
         n2list = olabel2[igroup[i]]['neighbors']
@@ -477,8 +482,11 @@ def connect(pack1,pack2,igroup, border = None):
         
         for r in remove2:
             if r in n2listc:
-                
+                print('n2listc (prior to r removal): ', n2listc)
                 n2listc.remove(r)
+                print('n2listc (after r removal): ', n2listc)
+                print('igroup i: ', i)
+                print('appendict: ', appendict)
         if appen:
             ## distinction is needed here for shared versus non shared nodes
             ## in the special triple bond case (mentioned above)
