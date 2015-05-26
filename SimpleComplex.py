@@ -7,7 +7,7 @@ DimX = 9
 DimY = 9
 global VARIANCE
 VARIANCE = .1
-ComplexSize = 2  ## number of Base Complexes to form a composite Union
+ComplexSize = 4  ## number of Base Complexes to form a composite Union
 MaxBaseSize = 7 ## Max n-Gon size
 CenterBase = 7 ## The median Base Complex for a Random Base Complex generation
                ## set.  Should always be less than or equal to MaxBaseSize.
@@ -391,9 +391,11 @@ def connect(pack1,pack2,igroup, border = None):
                     appen = True
                 else:
                     appen = False
-                if not igroup[bl] in remove2:
+                t2 = igroup[bl] in appendict
+                t3 = igroup[br] in appendict
+                if not igroup[bl] in remove2 and not t2:
                     remove2.append(igroup[bl])
-                if not igroup[br] in remove2:
+                if not igroup[br] in remove2 and not t3:
                     remove2.append(igroup[br])
                 if igroup[bl] in appendict:
                     appendict[igroup[bl]] = not appen
@@ -547,7 +549,7 @@ def getrandomexteriors(pack1,pack2):
 ##    else:
 ##        first = False
     first = True
-    border = 2  ## checking doubles only
+    border = 3  ## checking doubles only
     enode2 = getrandomexterior(exterior2)
     
     nnode2f = olabel2[enode2]['neighbors'][-1]
