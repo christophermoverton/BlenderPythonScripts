@@ -1,7 +1,8 @@
 import math
 import random
 ##import CirclePack
-
+## Modified version of SimpleComplex that includes distance from center
+## metric so that the Complex is evenly expanded from exterior nodes
 
 DimX = 9
 DimY = 9
@@ -306,11 +307,44 @@ def zeronodecheck(node,olabel):
     else:
         return False
 
+def updatexteriordist(extdistpack,dist,ext):
+    extdist,extdistr = extdistpack
+    if dist in extdist:
+        extdist[dist].append(ext)
+    else:
+        extdist[dist] = [ext]
+    extdistr[ext] = dist
+
+def removexteriordist(extdistpack,dist,ext):
+    extdist,extdistr = extdistpack
+    if dist in extdist:
+        exts = extdist[dist]
+        if ext in exts:
+            exts.remove(ext)
+            extdist[dist] = exts
+        if len(extdist[dist])==0:
+            del extdist[dist]
+    if ext in extdistr:
+        del extdistr[ext]
+
+def getminext(extdist):
+    dists = list(extdist.keys())
+    dists.sort()
+    mindist = dists[0]
+    return (mindist,extdist[mindist])
+
+def getminextdict(minexts,exterior):
+    extdict = {}
+    for minext in minexts:
+        extdict[minext] = exterior[minext]
+    return extdict
+            
 ## ****************************
 
-def connect(pack1,pack2,igroup, border = None):
+def connect(pack1,pack2,igroup, border = None, extdistpack = None):
     interior1,exterior1,olabel1 = pack1
     interior2,exterior2,olabel2 = pack2
+    extdist,extdistr = extdistpack
     # igroup is an index correspondence for interpack connections
     ## igroup is mapped from pack1 to pack2
     ## we check pack1 connectors, connections are combined and connections
@@ -323,8 +357,16 @@ def connect(pack1,pack2,igroup, border = None):
     ## that all intermediate points in the cycle are interconnected.
     igvalues = list(igroup.values())
     igrouprev = {}
+    dists = []
     for i in igroup:
         igrouprev[igroup[i]] = i
+        ## get distances to pack2 interior center node
+        dists.append(extdistr[i])
+    ## find minimum distance on dists set this indicates distance
+    ## indexing on the newly added complex set.  Since 
+    ## a triple bond yields all points being +1 from center or
+    ## +0 or -1 from center.
+    cdist = min(dists) + 1
     ## now add  pack2 nodes (except connectors), need also update labels
     remove2 = []
     appendict = {}
@@ -426,6 +468,13 @@ def connect(pack1,pack2,igroup, border = None):
                     ncyclec = [igrouprev[i]]
                     ncyclec += cyclec
                     cyclec = ncyclec
+                ## connecting node distance center dist for this
+                ## type 3 bond
+                updatexteriordist(extdistpack,cdist,i)
+            else:
+                if olabel2[i]['type'] == 'e':
+                    updatexteriordist(extdistpack,cdist+1,i)
+                
             rdict['neighbors'] = cyclec
             rdict['identifier'] = olabel2[i]['identifier']
             olabel1[i] = rdict
@@ -514,6 +563,8 @@ def connect(pack1,pack2,igroup, border = None):
             ##print(i)
             olabel1[i]['type'] = 'i'
             del exterior1[i]
+            rdist = extdistr[i]
+            removexteriordist(extdistpack,rdist,i)
         else:
             olabel1[i]['identifier'] = 0
                 
@@ -534,11 +585,12 @@ def connect(pack1,pack2,igroup, border = None):
 ## connect on a node boundary appropriately
 
 ## build random connections but need a test to confirm bond type
-def getrandomexteriors(pack1,pack2):
+def getrandomexteriors(pack1,pack2,extdist):
     interior1,exterior1,olabel1 = pack1
     interior2,exterior2,olabel2 = pack2
-    exterior1c = exterior1.copy()
+    ##exterior1c = exterior1.copy()
     exterior2c = exterior2.copy()
+    extdistc = extdist.copy()
     maincheck = True
     if random.random() >= .5:
         border = 2
@@ -557,6 +609,9 @@ def getrandomexteriors(pack1,pack2):
     nnode2l = olabel2[enode2]['neighbors'][0]
     nnode4f = getnnode(enode2, nnode2f, olabel2)
     nnode4l = getnnode(enode2, nnode2l, olabel2)
+
+    mindist, mexteriors = getminext(extdistc)
+    exterior1c = getminextdict(mexteriors,exterior1)
     while maincheck:
         enode1 = getrandomexterior(exterior1c)
         
@@ -590,9 +645,14 @@ def getrandomexteriors(pack1,pack2):
         del exterior1c[enode1]
         ##print('exterior: ', exterior1)
         if len(exterior1c) == 0:
-            return (None,None,None)
+            del extdistc[mindist]
+            if len(extdistc) == 0:
+                return (None,None,None)
+            mindist, mexteriors = getminext(extdistc)
+            exterior1c = getminextdict(mexteriors,exterior1)
+            
     
-def getbonds(pack1,pack2):
+def getbonds(pack1,pack2,extdist):
     
     interior1,exterior1,olabel1 = pack1
     interior2,exterior2,olabel2 = pack2
@@ -619,7 +679,7 @@ def getbonds(pack1,pack2):
 ##        first = True
 ##    else:
 ##        first = False
-    border, first, rnodes = getrandomexteriors(pack1,pack2)
+    border, first, rnodes = getrandomexteriors(pack1,pack2,extdist)
     enode1 = rnodes[0][0]
     enode2 = rnodes[1][0]
     ## if the bond type is double then we check for a triple bond
@@ -783,11 +843,17 @@ interior2, exterior2,olabel2 = {},{},{}
 ##***********************************
 interior1, exterior1, olabel1 = {},{},{}
 packs = []
+extdist,extdistr = {},{}
+extdistpack = (extdist,extdistr)
 for i in range(ComplexSize):
     pack = [interior1.copy(),exterior1.copy(),olabel1.copy()]
     packs.append(pack)
 prevlen = 0
 mbonds = []
+## update extdist dictionary
+for i in exterior1:
+    updatexteriordist(extdistpack,1,i)
+    
 for i in range(ComplexSize):
     igroup = {}
     basei = random.randint(0,len(RandomBase)-1)
@@ -799,14 +865,15 @@ for i in range(ComplexSize):
         interior,exterior,olabel = shiftplabel(interior, exterior,
                                                olabel,prevlen)
         packs[i] = [interior,exterior,olabel]
-        bonddat = getbonds(packs[0],packs[i])
+        bonddat = getbonds(packs[0],packs[i],extdist)
         igroup, border = bonddat
         ##print('Igroup: ', igroup)
         ##print('border: ', border)
         for b in igroup:
             if packs[0][2][b]['type'] == 'i':
                 mbonds.append(b)
-        connect(packs[0],packs[i],igroup, border)
+        extdistpack = (extdist,extdistr)
+        connect(packs[0],packs[i],igroup, border,extdistpack)
         ##prevlen = len(packs[0])
         prevlen += len(packs[i][2])
     else:

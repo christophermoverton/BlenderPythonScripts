@@ -33,11 +33,11 @@ import math
 
 global Triangulated, MaxSize, PolygonSize, MaxScaleIterations, Scale
 global EarlyRandom, AllConvex, JIntensity
-Triangulated = True
+Triangulated = False
 MaxSize = 10
-PolygonSize = 6 ## must be 3 or higher
-MaxScaleIterations = 2
-Scale = .5
+PolygonSize = 7 ## must be 3 or higher
+MaxScaleIterations = 40
+Scale = .95
 EarlyRandom = False  ## leads to greater probability of less convex polygon,
                      ##more jagged
 AllConvex = True ## yields Completely convex polygon with Early Random
@@ -912,9 +912,9 @@ def generatePolygon(center,radius):
         cycle = [vert3]
         verti = vertices.index(vert)
         vert1 = verti+index
-        Interior[vert3].append(vert1)
-        cycle += Interior[vert1]
-        Interior[vert1] = cycle
+##        Interior[vert3].append(vert1)
+##        cycle += Interior[vert1]
+##        Interior[vert1] = cycle
         vindex = walk.index(vert)     
         vindexn = None
         if vindex == 0:
