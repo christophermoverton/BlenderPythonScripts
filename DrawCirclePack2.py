@@ -28,7 +28,10 @@ for c in cpack:
     center, radius = cpack[c]
     cx = center.real
     cy = center.imag
-    verts,faces = generatePolygon((cx,cy),radius)
+    MaxScaleIterations = random.randint(2,10)
+    PolygonSize = random.randint(4,20)
+    verts,faces = generatePolygon((cx,cy),radius, MaxScaleIterations,
+                                  PolygonSize)
     vertsind = len(cpvertices)
     nfaces = []
     for face in faces:

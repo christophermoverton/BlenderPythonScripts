@@ -8,7 +8,7 @@ DimX = 9
 DimY = 9
 global VARIANCE
 VARIANCE = .5
-ComplexSize = 100 ## number of Base Complexes to form a composite Union
+ComplexSize = 300 ## number of Base Complexes to form a composite Union
 MaxBaseSize = 7 ## Max n-Gon size
 CenterBase = 6 ## The median Base Complex for a Random Base Complex generation
                ## set.  Should always be less than or equal to MaxBaseSize.

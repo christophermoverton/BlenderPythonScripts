@@ -31,17 +31,23 @@ import math
 ## to randomly generating three points and computing the circumcircle.
 
 
-global Triangulated, MaxSize, PolygonSize, MaxScaleIterations, Scale
-global EarlyRandom, AllConvex, JIntensity, Terrace
+global Triangulated, MaxSize, Scale
+global EarlyRandom, AllConvex, JIntensity, Terrace, Height, Peak
+global RandomScaleIteration
 Triangulated = False
 Terrace = True
+Peak = False
+RandomScaleIteration = True
 MaxSize = 10
-PolygonSize = 100 ## must be 3 or higher
+PolygonSize = 4 ## must be 3 or higher
 MaxScaleIterations = 10
+if RandomScaleIteration:
+    MaxScaleIterations = random.randint(2,MaxScaleIterations)
 if Terrace:
     MaxScaleIterations *= 2
-Scale = .6
-EarlyRandom = True  ## leads to greater probability of less convex polygon,
+Scale = .8
+Height = 3.0
+EarlyRandom = False  ## leads to greater probability of less convex polygon,
                      ##more jagged
 AllConvex = False ## yields Completely convex polygon with Early Random
                 ## set False, otherwise, is likely to be extremely
@@ -533,7 +539,7 @@ def addinteriorcycle(cycle,Interior,vertex, order):
     elif order == 7:
         Interior[vertex] += cycle
 
-def generatePolygon(center,radius):
+def generatePolygon(center,radius, MaxScaleIterations, PolygonSize):
     edgecount = 0
     vertices = []
     edges = []
@@ -826,6 +832,8 @@ def generatePolygon(center,radius):
         Exterior[verti] = .1##random.random()
 
     Interior ={}
+    if Terrace:
+        MaxScaleIterations *= 2
 
     while i < MaxScaleIterations:
         index = len(walk)*i
@@ -834,9 +842,9 @@ def generatePolygon(center,radius):
         nvertices2 = []
         if Terrace:
             if i % 2 == 0:
-                height += random.random()*.1
+                height += random.random()*Height
         else:
-            height += random.random()*.1
+            height += random.random()*Height
         for vert in walk:
             verti = vertices.index(vert)
             vert1 = verti+indexmn1
@@ -920,8 +928,8 @@ def generatePolygon(center,radius):
         prevvertices = nvertices2[0:len(nvertices2)]
         bvertices += nvertices
         i+= 1
-
-    height += random.random()*.1
+    if Peak:
+        height += random.random()*Height
     bvertices.append((centerx,centery,height))
     ## Final face/vertex pass
     vert3 = len(bvertices)-1
