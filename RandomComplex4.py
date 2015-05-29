@@ -32,18 +32,21 @@ import math
 
 
 global Triangulated, MaxSize, PolygonSize, MaxScaleIterations, Scale
-global EarlyRandom, AllConvex, JIntensity
+global EarlyRandom, AllConvex, JIntensity, Terrace
 Triangulated = False
+Terrace = True
 MaxSize = 10
-PolygonSize = 7 ## must be 3 or higher
-MaxScaleIterations = 40
-Scale = .95
-EarlyRandom = False  ## leads to greater probability of less convex polygon,
+PolygonSize = 100 ## must be 3 or higher
+MaxScaleIterations = 10
+if Terrace:
+    MaxScaleIterations *= 2
+Scale = .6
+EarlyRandom = True  ## leads to greater probability of less convex polygon,
                      ##more jagged
-AllConvex = True ## yields Completely convex polygon with Early Random
+AllConvex = False ## yields Completely convex polygon with Early Random
                 ## set False, otherwise, is likely to be extremely
 ## jagged with high JIntensity and high PolygonSize
-JIntensity = 0.3  ## scale ranges from 0 to 1  with full intensity at 1
+JIntensity = 0.4  ## scale ranges from 0 to 1  with full intensity at 1
                  ## and zero intensity at zero
 
 
@@ -823,12 +826,17 @@ def generatePolygon(center,radius):
         Exterior[verti] = .1##random.random()
 
     Interior ={}
+
     while i < MaxScaleIterations:
         index = len(walk)*i
         indexmn1 = len(walk)*(i-1)
         nvertices = []
         nvertices2 = []
-        height += random.random()*.1
+        if Terrace:
+            if i % 2 == 0:
+                height += random.random()*.1
+        else:
+            height += random.random()*.1
         for vert in walk:
             verti = vertices.index(vert)
             vert1 = verti+indexmn1
@@ -893,8 +901,18 @@ def generatePolygon(center,radius):
             ## translate coordinates
             xtr = x - centerx
             ytr = y - centery
-            xs = xtr*Scale
-            ys = ytr*Scale
+            xs = None
+            ys = None
+            if Terrace:
+                if i % 2 != 0:
+                    xs = xtr*Scale
+                    ys = ytr*Scale
+                else:
+                    xs = xtr
+                    ys = ytr
+            else:
+                xs = xtr*Scale
+                ys = ytr*Scale
             xs += centerx
             ys += centery
             nvertices2.append((xs,ys))

@@ -8,7 +8,7 @@ DimX = 9
 DimY = 9
 global VARIANCE
 VARIANCE = .5
-ComplexSize = 125 ## number of Base Complexes to form a composite Union
+ComplexSize = 100 ## number of Base Complexes to form a composite Union
 MaxBaseSize = 7 ## Max n-Gon size
 CenterBase = 6 ## The median Base Complex for a Random Base Complex generation
                ## set.  Should always be less than or equal to MaxBaseSize.
@@ -314,6 +314,7 @@ def updatexteriordist(extdistpack,dist,ext):
     else:
         extdist[dist] = [ext]
     extdistr[ext] = dist
+##    extdistpack = (extdist,extdistr)
 
 def removexteriordist(extdistpack,dist,ext):
     extdist,extdistr = extdistpack
@@ -326,6 +327,7 @@ def removexteriordist(extdistpack,dist,ext):
             del extdist[dist]
     if ext in extdistr:
         del extdistr[ext]
+##    extdistpack = (extdist,extdistr)
 
 def getminext(extdist):
     dists = list(extdist.keys())
@@ -845,14 +847,13 @@ interior1, exterior1, olabel1 = {},{},{}
 packs = []
 extdist,extdistr = {},{}
 extdistpack = (extdist,extdistr)
+
 for i in range(ComplexSize):
     pack = [interior1.copy(),exterior1.copy(),olabel1.copy()]
     packs.append(pack)
 prevlen = 0
 mbonds = []
-## update extdist dictionary
-for i in exterior1:
-    updatexteriordist(extdistpack,1,i)
+
     
 for i in range(ComplexSize):
     igroup = {}
@@ -873,11 +874,15 @@ for i in range(ComplexSize):
             if packs[0][2][b]['type'] == 'i':
                 mbonds.append(b)
         extdistpack = (extdist,extdistr)
+        ##print('extdistpack: ', extdistpack)
         connect(packs[0],packs[i],igroup, border,extdistpack)
         ##prevlen = len(packs[0])
         prevlen += len(packs[i][2])
     else:
         prevlen = len(packs[0][2])
+        ## update extdist dictionary
+        for i in exterior:
+            updatexteriordist(extdistpack,1,i)
     ##print(packs[0])
     ##print('previous length: ', prevlen)
     
