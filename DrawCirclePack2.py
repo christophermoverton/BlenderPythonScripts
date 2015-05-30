@@ -30,8 +30,9 @@ for c in cpack:
     cy = center.imag
     MaxScaleIterations = random.randint(2,10)
     PolygonSize = random.randint(4,20)
+    Scale = random.uniform(.5,.98)
     verts,faces = generatePolygon((cx,cy),radius, MaxScaleIterations,
-                                  PolygonSize)
+                                  PolygonSize, Scale)
     vertsind = len(cpvertices)
     nfaces = []
     for face in faces:

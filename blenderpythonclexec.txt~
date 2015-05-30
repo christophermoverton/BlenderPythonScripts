@@ -17,6 +17,7 @@ filename = "/home/strangequark/BlenderPythonScripts/RandomComplex3.py"
 filename2 = "/home/strangequark/BlenderPythonScripts/CirclePack.py"
 filename3 = "/home/strangequark/BlenderPythonScripts/DrawCirclePack.py"
 filename4 = "/home/strangequark/BlenderPythonScripts/SimpleComplex.py"
+filename4 = "/home/strangequark/BlenderPythonScripts/CirclePackDualGraph.py"
 
 to execute filename4 you'll need to ensure sys.path includes
 "/home/strangequark/BlenderPythonScripts" directory
@@ -24,4 +25,7 @@ so
 at python console run:
 >> import sys
 
->>  
+>> sys.path.append("/home/strangequark/BlenderPythonScripts")
+
+Then run as usual 
+exec(compile(open(filename4).read(), filename4, 'exec')) 

@@ -31,7 +31,7 @@ import math
 ## to randomly generating three points and computing the circumcircle.
 
 
-global Triangulated, MaxSize, Scale
+global Triangulated, MaxSize
 global EarlyRandom, AllConvex, JIntensity, Terrace, Height, Peak
 global RandomScaleIteration
 Triangulated = False
@@ -214,7 +214,7 @@ def cubicInterpolate (p, x):
 def distance(a,b):
     ax,ay = a
     bx,by = b
-    return ((ax-bx)**2+(ay-by)**2)**.5
+    return (abs((ax-bx)**2)+abs((ay-by)**2))**.5
 
 def getMinMax(edge):
     edgex = edge[0:len(edge)]
@@ -539,7 +539,8 @@ def addinteriorcycle(cycle,Interior,vertex, order):
     elif order == 7:
         Interior[vertex] += cycle
 
-def generatePolygon(center,radius, MaxScaleIterations, PolygonSize):
+def generatePolygon(center,radius, MaxScaleIterations, PolygonSize,
+                    Scale):
     edgecount = 0
     vertices = []
     edges = []
