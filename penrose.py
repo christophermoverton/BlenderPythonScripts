@@ -6,8 +6,8 @@ import bpy
 #------ Configuration --------
 IMAGE_SIZE = (1000, 1000)
 NUM_SUBDIVISIONS = 8
-POLY = 12
-MGOLDENRATIO = True
+POLY = 10
+MGOLDENRATIO = False
 #-----------------------------
 
 
@@ -301,4 +301,6 @@ for vertpair in vertsface:
 ##        bpy.ops.mesh.select_all(action = 'DESELECT')
 ##        bpy.ops.object.mode_set(mode = 'OBJECT')
 bpy.ops.object.mode_set(mode = 'EDIT')
+bpy.ops.object.vertex_group_add()
+bpy.ops.object.vertex_group_assign()
 bpy.ops.mesh.dissolve_edges()
