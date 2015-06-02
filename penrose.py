@@ -36,6 +36,84 @@ def measurePhi():
     chord *= 2.0
     return chord/sidelen
 
+def clockwisewalktest(walk):
+    ## works with nonconvex polygons should be safe
+    ## I believe for the primitive polygon type (3 vertices)
+    ## constructed in this algorithm.
+    prev = None
+    samt = 0.0
+    newwalk = walk[0:len(walk)]
+    newwalk.append(walk[0])
+    for vert in newwalk:
+        if prev == None:
+            prev = vert
+            continue
+##        samt += (vert[0]-prev[0])*(vert[1]+prev[1])
+        samt += (prev[0]*vert[1]-prev[1]*vert[0])
+##        if walk.index(vert) == len(walk)-1:
+##            samt += (walk[0][0] - vert[0])*(walk[0][1]+vert[1])
+        prev = vert
+    ##print('samt: ', samt)
+    if samt < 0:
+        ##print('original walk is clockwise')
+        return True
+    else:
+        ##print('original walk is counter clockwise')
+        return False
+
+def connectivity(triangle, vertsface):
+    ## check for connectivity
+    color,A,B,C = triangle
+    if (A,B) in vertsface:
+        for V in vertsface[(A,B)]:
+            if V != C:
+                if color == vertsface[(A,B)][V][1]:
+                    return (True, (A,B), C)
+    if (B,A) in vertsface:
+        for V in vertsface[(B,A)]:
+            if V != C:
+                if color == vertsface[(B,A)][V][1]:
+                    return (True, (B,A), C)
+    if (A,C) in vertsface:
+        for V in vertsface[(A,C)]:
+            if V != B:
+                if color == vertsface[(A,C)][V][1]:
+                    return (True, (A,C), B)
+    if (C,A) in vertsface:
+        for V in vertsface[(C,A)]:
+            if V != B:
+                if color == vertsface[(C,A)][V][1]:
+                    return (True, (C,A), B)
+    if (B,C) in vertsface:
+        for V in vertsface[(B,C)]:
+            if V != A:
+                if color == vertsface[(B,C)][V][1]:
+                    return (True, (B,C), A)
+    if (C,B) in vertsface:
+        for V in vertsface[(C,B)]:
+            if V != A:
+                if color == vertsface[(C,B)][V][1]:
+                    return (True, (C,B), A)
+    return (False, (None,None), None)
+
+def updatevertsface(triangle, vertsface, faceindex):
+    color, A,B,C = triangle
+    if not (A,B) in vertsface:
+        vertsface[(A,B)] = {C:(faceindex,color)}
+    else:
+        if not C in vertsface[(A,B)]:
+            vertsface[(A,B)][C] = (faceindex,color)        
+    if not (A,C) in vertsface:
+        vertsface[(A,C)] = {B:(faceindex,color)}
+    else:
+        if not B in vertsface[(A,C)]:
+            vertsface[(A,C)][B] = (faceindex,color)        
+    if not (B,C) in vertsface:
+        vertsface[(B,C)] = {A:(faceindex,color)}
+    else:
+        if not A in vertsface[(B,C)]:
+            vertsface[(B,C)][A] = (faceindex,color)
+
 if MGOLDENRATIO:
     goldenRatio = measurePhi()
     
@@ -107,58 +185,6 @@ vertsface = {}
 ## vertsface keyed by triangle double complex pair
 ## values are tuple paired by face index and color assignment
 
-def connectivity(triangle, vertsface):
-    ## check for connectivity
-    color,A,B,C = triangle
-    if (A,B) in vertsface:
-        for V in vertsface[(A,B)]:
-            if V != C:
-                if color == vertsface[(A,B)][V][1]:
-                    return (True, (A,B), C)
-    if (B,A) in vertsface:
-        for V in vertsface[(B,A)]:
-            if V != C:
-                if color == vertsface[(B,A)][V][1]:
-                    return (True, (B,A), C)
-    if (A,C) in vertsface:
-        for V in vertsface[(A,C)]:
-            if V != B:
-                if color == vertsface[(A,C)][V][1]:
-                    return (True, (A,C), B)
-    if (C,A) in vertsface:
-        for V in vertsface[(C,A)]:
-            if V != B:
-                if color == vertsface[(C,A)][V][1]:
-                    return (True, (C,A), B)
-    if (B,C) in vertsface:
-        for V in vertsface[(B,C)]:
-            if V != A:
-                if color == vertsface[(B,C)][V][1]:
-                    return (True, (B,C), A)
-    if (C,B) in vertsface:
-        for V in vertsface[(C,B)]:
-            if V != A:
-                if color == vertsface[(C,B)][V][1]:
-                    return (True, (C,B), A)
-    return (False, (None,None), None)
-
-def updatevertsface(triangle, vertsface, faceindex):
-    color, A,B,C = triangle
-    if not (A,B) in vertsface:
-        vertsface[(A,B)] = {C:(faceindex,color)}
-    else:
-        if not C in vertsface[(A,B)]:
-            vertsface[(A,B)][C] = (faceindex,color)        
-    if not (A,C) in vertsface:
-        vertsface[(A,C)] = {B:(faceindex,color)}
-    else:
-        if not B in vertsface[(A,C)]:
-            vertsface[(A,C)][B] = (faceindex,color)        
-    if not (B,C) in vertsface:
-        vertsface[(B,C)] = {A:(faceindex,color)}
-    else:
-        if not A in vertsface[(B,C)]:
-            vertsface[(B,C)][A] = (faceindex,color)
 
 for color, A, B, C in triangles:
     Ax = A.real
@@ -171,6 +197,7 @@ for color, A, B, C in triangles:
     Cy = C.imag
     Cv = (Cx,Cy,0.0)
     face = []
+    wface = []
 ##    if check:
 ##        faceind, fc = vertsface[pair]
 ##        face = list(faces[faceind])
@@ -201,25 +228,37 @@ for color, A, B, C in triangles:
 ##    else:    
     if Av in vertindex:
         face.append(vertindex[Av])
+        wface.append(Av)
     else:
         vertices.append(Av)
         Aind = len(vertices)-1
         face.append(Aind)
+        wface.append(Av)
         vertindex[Av] = Aind
     if Bv in vertindex:
         face.append(vertindex[Bv])
+        wface.append(Bv)
     else:
         vertices.append(Bv)
         Bind = len(vertices)-1
         face.append(Bind)
         vertindex[Bv] = Bind
+        wface.append(Bv)
     if Cv in vertindex:
         face.append(vertindex[Cv])
+        wface.append(Cv)
     else:
         vertices.append(Cv)
         Cind = len(vertices)-1
         face.append(Cind)
         vertindex[Cv] = Cind
+        wface.append(Cv)
+    if not clockwisewalktest(wface):
+        face0 = [face[0]]
+        facec = face[1:len(face)]
+        facec = facec[::-1]
+        face0 += facec
+        face = face0
     faces.append(tuple(face))
     faceind = len(faces)-1
     updatevertsface((color,A,B,C), vertsface, faceind)
