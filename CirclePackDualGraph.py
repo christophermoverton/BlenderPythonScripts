@@ -210,7 +210,7 @@ def gDualGraphN(Cpack,Complex,Root, NodePairLine, TripleIntersect,
         else:
             face.append(u3)
     faces.append(face)
-    nodetofaceind[len(faces)-1] = Cpack[Root][0]
+    nodetofaceind[len(faces)-1] = Cpack[Root]
 
 def generateDualGraph(pack,CPack, NodePairLine,
                       TripleIntersect, vertices, faces, nodetofaceind):

@@ -18,28 +18,42 @@ def midpoint(edge):
     return (a+b)/2
 
 for findex, face in enumerate(faces):
-    croot = nodetofaceind[findex]
+    croot,cradius = nodetofaceind[findex]
 ##    rx,ry = root
 ##    croot = complex(rx,ry)
     triangles = []
-    for index, vert in enumerate(face):
-        nindex = None
-        nvert = None
-        if index == len(face)-1:
-            nindex = 0
-        else:
-            nindex = index+1
-        nvert = face[nindex]
-        vcoord = vertices[vert]
-        nvcoord = vertices[nvert]
-        xv,yv,zv = vcoord
-        xnv,ynv,znv = nvcoord
-        a = complex(xv,yv)
-        b = complex(xnv,ynv)
-        mab = midpoint((a,b))
-        
-        triangles.append((0,croot,a,mab))
-        triangles.append((0,croot,mab,b))
+    POLY = float(len(face)*2.0)
+##    for index, vert in enumerate(face):
+##        nindex = None
+##        nvert = None
+##        if index == len(face)-1:
+##            nindex = 0
+##        else:
+##            nindex = index+1
+##        nvert = face[nindex]
+##        vcoord = vertices[vert]
+##        nvcoord = vertices[nvert]
+##        xv,yv,zv = vcoord
+##        xnv,ynv,znv = nvcoord
+##        a = complex(xv,yv)
+##        b = complex(xnv,ynv)
+##        mab = midpoint((a,b))
+##        
+##        triangles.append((0,croot,a,mab))
+##        triangles.append((0,croot,mab,b))
+    ##triangles = []
+    for i in range(int(POLY)):
+    ##    if i % 2 == 0:
+        B = cmath.rect(cradius, (2*i - 1) * math.pi / POLY)
+        C = cmath.rect(cradius, (2*i + 1) * math.pi / POLY)
+    ##    else:
+    ##        B = cmath.rect(0.6180339887498948, (2*i - 1) * math.pi / 10)
+    ##        C = cmath.rect(1, (2*i + 1) * math.pi / 10)
+        if i % 2 == 0:
+            B, C = C, B  # Make sure to mirror every second triangle
+        B += croot
+        C += croot
+        triangles.append((0, croot, B, C))
     cv, cf, sv = penrosesubdivde(triangles)
     nextinc = len(pvertices)
     nextincf = len(pfaces)

@@ -5,8 +5,8 @@ import bpy
 
 #------ Configuration --------
 IMAGE_SIZE = (1000, 1000)
-NUM_SUBDIVISIONS = 4
-POLY = 10
+NUM_SUBDIVISIONS = 5
+POLY = 6
 MGOLDENRATIO = False
 #-----------------------------
 
