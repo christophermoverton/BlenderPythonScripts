@@ -19,7 +19,7 @@ filename3 = "/home/strangequark/BlenderPythonScripts/DrawCirclePack.py"
 filename4 = "/home/strangequark/BlenderPythonScripts/SimpleComplex.py"
 filename5 = "/home/strangequark/BlenderPythonScripts/CirclePackDualGraph.py"
 filename6 = "/home/strangequark/BlenderPythonScripts/penrose2.py" 
-filename7 = "/home/strangequark/BlenderPythonScripts/penrose2.py"
+filename7 = "/home/strangequark/BlenderPythonScripts/DualGraphtoPenrose.py"
 
 to execute filename4 you'll need to ensure sys.path includes
 "/home/strangequark/BlenderPythonScripts" directory

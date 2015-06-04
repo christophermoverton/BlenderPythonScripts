@@ -19,6 +19,9 @@ def midpoint(edge):
 
 for findex, face in enumerate(faces):
     croot,cradius = nodetofaceind[findex]
+    ## sample height
+    z = vertices[face[0]][2]
+    print('face z: ', z)
 ##    rx,ry = root
 ##    croot = complex(rx,ry)
     triangles = []
@@ -66,6 +69,10 @@ for findex, face in enumerate(faces):
     for indf, f in enumerate(sv):
         sv[indf] += nextincf
     ## concatenate vertices and everything else
+    for i, v in enumerate(cv):
+        vl = list(v)
+        vl[2] = z
+        cv[i] = vl
     pvertices += cv
     pfaces += cf
     pselections += sv
