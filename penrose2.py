@@ -131,10 +131,11 @@ if MGOLDENRATIO:
 ##        B, C = C, B  # Make sure to mirror every second triangle
 ##    triangles.append((0, 0j, B, C))
 
-def penrosesubdivde(triangles):
+def penrosesubdivde(triangles, subdivide = True):
     # Perform subdivisions
-    for i in range(NUM_SUBDIVISIONS):
-        triangles = subdivide(triangles)
+    if subdivide:
+        for i in range(NUM_SUBDIVISIONS):
+            triangles = subdivide(triangles)
 
 
     vertices = []

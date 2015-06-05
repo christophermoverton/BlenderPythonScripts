@@ -8,7 +8,7 @@ import random
 ##                   use_select_inset=False, use_individual=False,
 ##                   use_interpolate=True)
 global Height,Scale,ScaleOn
-Height = .02
+Height = .1
 Scale = .95
 ScaleOn = True
 
@@ -83,13 +83,14 @@ def batchrextrude(height = Height, scale = Scale, scaleon = ScaleOn,
                 setfaces += [list(prevwalk)]
 ##                setverts += nwalkverts
             continue
-        rescales = random.randint(1,6)
+        rescales = random.randint(1,5)
         terrace = random.random()
         newprevwalk = []
         for vert in prevwalk:
             newprevwalk.append(verts[vert])
         prevwalk = newprevwalk
-        if terrace > .45:
+        terraceb = None
+        if terrace > .35:
             terraceb = True
             rescales *= 2
         else:
@@ -161,7 +162,7 @@ def batchrextrude(height = Height, scale = Scale, scaleon = ScaleOn,
                 xs = None
                 ys = None
                 if terraceb:
-                    if i % 2 != 0:
+                    if i % 2 == 0:
                         xs = xtr*Scale
                         ys = ytr*Scale
                     else:
