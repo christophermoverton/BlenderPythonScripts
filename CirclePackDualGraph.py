@@ -228,8 +228,30 @@ def gDualGraphN(Cpack,Complex,Root, NodePairLine, TripleIntersect,
                 vertices.append(triplepoint)
                 tindex = len(vertices)-1
             face.append(tindex)
-            TripleIntersect[(Root,neighbor)] = {nneighbor:tindex}
-            TripleIntersect[(Root,nneighbor)] = {neighbor:tindex}
+            if p3 in TripleIntersect:
+                TripleIntersect[p3][nneighbor] = tindex
+            else:
+                TripleIntersect[(Root,neighbor)] = {nneighbor:tindex}
+            if p4 in TripleIntersect:
+                TripleIntersect[p4][nneighbor] = tindex
+            else:
+                TripleIntersect[(neighbor,Root)] = {nneighbor:tindex}
+            if p5 in TripleIntersect:
+                TripleIntersect[p5][neighbor] = tindex
+            else:
+                TripleIntersect[(Root,nneighbor)] = {neighbor:tindex}
+            if p6 in TripleIntersect:
+                TripleIntersect[p6][neighbor] = tindex
+            else:
+                TripleIntersect[(nneighbor,Root)] = {neighbor:tindex}
+            if p1 in TripleIntersect:
+                TripleIntersect[p1][Root] = tindex
+            else:
+                TripleIntersect[(neighbor,nneighbor)] = {Root:tindex}
+            if p2 in TripleIntersect:
+                TripleIntersect[p2][Root] = tindex
+            else:
+                TripleIntersect[(nneighbor,neighbor)] = {Root:tindex}
         else:
             face.append(u3)
     faces.append(face)

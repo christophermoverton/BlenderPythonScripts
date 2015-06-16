@@ -124,11 +124,12 @@ TripleIntersect = {}
 vertices = []
 faces = []
 nodetofaceind = {}
+Edgestofaces = {}
 
 ## A circle pack alongside a given Complex is needed here
 
 def gDualGraphN(Cpack,Complex,Root, NodePairLine, TripleIntersect,
-                vertices, faces, nodetofaceind):
+                vertices, faces, nodetofaceind, edgestofaces):
     ## Root is the root node in which to generate dual graph
     ## nodes.
     ## Root nodes should only be 'interior' node from such Complex.
@@ -232,16 +233,30 @@ def gDualGraphN(Cpack,Complex,Root, NodePairLine, TripleIntersect,
             TripleIntersect[(Root,nneighbor)] = {neighbor:tindex}
         else:
             face.append(u3)
+
     faces.append(face)
+    faceind = len(faces)-1
+    for ind, vi in enumerate(face):
+        nn = None
+        if ind == len(face)-1:
+            nn = face[0]
+        else:
+            nn = face[ind +1]
+        t1 = (vi,nn) in edgestofaces
+        t2 = (nn,vi) in edgestofaces
+        
+        if not t1:
+            edgestofaces[(vi,nn)] = faceind
     nodetofaceind[len(faces)-1] = Cpack[Root]
 
 def generateDualGraph(pack,CPack, NodePairLine,
-                      TripleIntersect, vertices, faces, nodetofaceind):
+                      TripleIntersect, vertices, faces, nodetofaceind,
+                      edgestofaces = Edgestofaces):
     ## pack is interior,exterior,and full complex tuple dictionary package
     interior,exterior,Complex = pack
     for node in interior:
         gDualGraphN(CPack,Complex,node, NodePairLine, TripleIntersect,
-                vertices, faces, nodetofaceind)
+                vertices, faces, nodetofaceind, edgestofaces)
     verticesc = []
     for vert in vertices:
         vx,vy = vert
