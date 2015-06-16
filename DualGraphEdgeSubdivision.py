@@ -2,7 +2,8 @@ import random
 ##import bpy
 import math
 
-Subdivisions = 3
+Subdivisions = 2
+
 ## This algorithm is an extension of CirclePackDualGraph2.py
 ## should have run this and previous prerequisites before running this
 ## script.
@@ -34,32 +35,14 @@ def setRotation(edge):
     vec = norm(vec)
     return vec
 
-def updateRotatheir(edge, parent, rotheir):
-    ## assumed under midpoint subdivision a new edge
-    ## will have at least one but not more than one
-    ## matching vertex to the root edge
-    root = rotheir[parent]
-    ra, rb = root
-    a,b = edge
 
-    ## find which vertex is closest to root a
-
-    if a == ra or a == rb:
-        if a == rb:
-            rotheir[edge] = (b,a)
-        else:
-            rotheir[edge] = (a,b)
-    if b == ra or b == rb:
-        if b == rb:
-            rotheir[edge] = (a,b)
-        else:
-            rotheir[edge] = (b,a)
-
+dvertices = vertices[0:len(vertices)]
+dfaces = faces[0:len(faces)]
 edges = {}
 completededges = []
 edgetonewside = {}
 i = 0
-for findex, face in enumerate(faces):
+for findex, face in enumerate(dfaces):
     newface = []
     for ind, vi in enumerate(face):
         
@@ -79,8 +62,8 @@ for findex, face in enumerate(faces):
                 for edgevind in newedges:
                     
                     ai,bi = edgevind
-                    edge = [list(vertices[ai])[0:2],
-                            list(vertices[bi])[0:2]]  ##expects 2d
+                    edge = [list(dvertices[ai])[0:2],
+                            list(dvertices[bi])[0:2]]  ##expects 2d
                     mpoint = midpoint(edge)
                     rvec = setRotation(edge)
                     x, y = mpoint
@@ -93,8 +76,8 @@ for findex, face in enumerate(faces):
                     ##print('y at midpoint: ', y)
                     x = x + posit*rvec[0]/(4*sc ) ##+ i)
                     y = y + posit*rvec[1]/(4*sc)##+ i)
-                    vertices.append((x,y,0.0))
-                    nvindex = len(vertices)-1
+                    dvertices.append((x,y,0.0))
+                    nvindex = len(dvertices)-1
                     newedgesr.append((ai,nvindex))
                     newedgesr.append((nvindex,bi))
                 newedges = newedgesr[0:len(newedgesr)]
@@ -104,9 +87,13 @@ for findex, face in enumerate(faces):
                 ai,bi = edge
                 if not ai in newface:
                     newface.append(ai)
-                    newside.append(ai)
+                    ##newside.append(ai)
                 if not bi in newface:
                     newface.append(bi)
+                    ##newside.append(bi)
+                if not ai in newside:
+                    newside.append(ai)
+                if not bi in newside:
                     newside.append(bi)
             edgetonewside[(nn,vi)] = newside[::-1]
         else:
@@ -114,7 +101,7 @@ for findex, face in enumerate(faces):
             for v in newside:
                 if not v in newface:
                     newface.append(v)
-    faces[findex] = newface[0:len(newface)]
+    dfaces[findex] = newface[0:len(newface)]
 
 meshName = "DualGraphSubdividePolygon"
 obName = "DualGraphSubdividePolygonObj"
@@ -122,5 +109,5 @@ me = bpy.data.meshes.new(meshName)
 ob = bpy.data.objects.new(obName, me)
 ob.location = bpy.context.scene.cursor_location
 bpy.context.scene.objects.link(ob)
-me.from_pydata(vertices,[],faces)      
+me.from_pydata(dvertices,[],dfaces)      
 me.update(calc_edges=True)             
