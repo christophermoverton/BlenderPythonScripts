@@ -2,13 +2,14 @@ import random
 ##import bpy
 import math
 
-Subdivisions = 2
-Height = .3
-MaxScaleIterations = 3
-Terrace = False
+Subdivisions = 1
+Height = .9
+MaxScaleIterations = 5
+Terrace = True
 Triangulated = False
 Peak = True
-Scale = .7
+Scale = .95
+SmoothJaggedness = .5  ## Higher factor means less jagged polygon randomization
 if Terrace:
     MaxScaleIterations *= 2
 ## This algorithm is an extension of CirclePackDualGraph2.py
@@ -106,8 +107,8 @@ for findex, face in enumerate(dfaces):
                     else:
                         posit = -1
                     ##print('y at midpoint: ', y)
-                    x = x + posit*rvec[0]/(4*sc ) ##+ i)
-                    y = y + posit*rvec[1]/(4*sc)##+ i)
+                    x = x + posit*rvec[0]/(2*sc*SmoothJaggedness ) ##+ i)
+                    y = y + posit*rvec[1]/(2*sc*SmoothJaggedness )##+ i)
                     dvertices.append((x,y,0.0))
                     nvindex = len(dvertices)-1
                     newedgesr.append((ai,nvindex))
@@ -144,7 +145,7 @@ for findex, face in enumerate(dfaces):
 ##        index = len(walk)*i
 ##        indexmn1 = len(walk)*(i-1)
         nvertices = []
-    
+        rscale = random.uniform(.6,.9999)
         if Terrace:
             if i % 2 == 0:
                 height += random.random()*Height
@@ -158,16 +159,17 @@ for findex, face in enumerate(dfaces):
             ytr = y - centery
             xs = None
             ys = None
+            
             if Terrace:
                 if i % 2 != 0:
-                    xs = xtr*Scale
-                    ys = ytr*Scale
+                    xs = xtr*Scale*rscale
+                    ys = ytr*Scale*rscale
                 else:
                     xs = xtr
                     ys = ytr
             else:
-                xs = xtr*Scale
-                ys = ytr*Scale
+                xs = xtr*Scale*rscale
+                ys = ytr*Scale*rscale
             xs += centerx
             ys += centery
             dvertices.append((xs,ys,height))
