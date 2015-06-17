@@ -3,13 +3,14 @@ import random
 import math
 
 Subdivisions = 2
-Height = .1
-MaxScaleIterations = 4
+Height = .3
+MaxScaleIterations = 3
 Terrace = False
 Triangulated = False
-Peak = False
-Scale = .8
-
+Peak = True
+Scale = .7
+if Terrace:
+    MaxScaleIterations *= 2
 ## This algorithm is an extension of CirclePackDualGraph2.py
 ## should have run this and previous prerequisites before running this
 ## script.
@@ -134,8 +135,7 @@ for findex, face in enumerate(dfaces):
                     newface.append(v)
     dfaces[findex] = newface[0:len(newface)]
     Interior = {}
-    if Terrace:
-        MaxScaleIterations *= 2
+
     walk = newface[0:len(newface)]
     prevwalk = []
     height = 0
@@ -144,7 +144,6 @@ for findex, face in enumerate(dfaces):
 ##        index = len(walk)*i
 ##        indexmn1 = len(walk)*(i-1)
         nvertices = []
-        nvertices2 = []
     
         if Terrace:
             if i % 2 == 0:
@@ -175,23 +174,23 @@ for findex, face in enumerate(dfaces):
 ##            nvertices2.append((xs,ys))
 ##            nvertices.append((xs, ys, height))
             nvertices.append(len(dvertices)-1)
-            if i == 0:
-                continue
+##            if i == 0:
+##                continue
             vert2 = len(dvertices)-1
 ##            verti = dvertices.index(vert)
-            vert1 = prevwalk[vi]
+            vert1 = vert
 ##            vert2 = verti+index
 ##            vindex = walk.index(vert)     
 ##            vindexn = None
             vert3 = None
             vert4 = None
             if vi == 0:
-                vindexn = len(walk)-1
+                ##vindexn = len(walk)-1
                 vert3 = len(dvertices)-1+len(walk)-1
-                vert4 = prevwalk[len(prevwalk)-1]
+                vert4 = walk[len(walk)-1]
             else:
                 vert3 = len(dvertices)-2
-                vert4 = prevwalk[vi-1]
+                vert4 = walk[vi-1]
 ##            vnc = walk[vindexn]
 ##            vni = dvertices.index(vnc)
 ##            vert3 = vni + index
@@ -241,57 +240,35 @@ for findex, face in enumerate(dfaces):
             else:
                 face = (vert1,vert2,vert3,vert4)
                 efaces.append(face)
-        prevwalk = walk[0:len(walk)]
+        ##prevwalk = walk[0:len(walk)]
         walk = nvertices[0:len(nvertices)]
-##        for vert in prevvertices:
-##            x,y = vert
-##            ## translate coordinates
-##            xtr = x - centerx
-##            ytr = y - centery
-##            xs = None
-##            ys = None
-##            if Terrace:
-##                if i % 2 != 0:
-##                    xs = xtr*Scale
-##                    ys = ytr*Scale
-##                else:
-##                    xs = xtr
-##                    ys = ytr
-##            else:
-##                xs = xtr*Scale
-##                ys = ytr*Scale
-##            xs += centerx
-##            ys += centery
-##            nvertices2.append((xs,ys))
-##            nvertices.append((xs, ys, height))
-##        prevvertices = nvertices2[0:len(nvertices2)]
-##        bvertices += nvertices
+
         
         i+= 1
-##    if Peak:
-##        height += random.random()*Height
-##    dvertices.append((centerx,centery,height))
-##    ## Final face/vertex pass
-##    vert3 = len(bvertices)-1
-##    Interior[vert3] = []
-##    for vi,vert in enumerate(walk):
-####        cycle = [vert3]
-####        verti = vertices.index(vert)
-##        vert1 = vert
-####        Interior[vert3].append(vert1)
-####        cycle += Interior[vert1]
-####        Interior[vert1] = cycle
-####        vindex = walk.index(vert)     
-##        vert2 = None
-##        if vi == 0:
-##            vert2 = walk[len(walk)-1]
-##        else:
-##            vert2 = walk[vi-1]
-####        vnc = walk[vindexn]
-####        vni = vertices.index(vnc)
-####        vert2 = vni + index
-##        face = (vert1,vert3,vert2)
-##        efaces.append(face)
+    if Peak:
+        height += random.random()*Height
+    dvertices.append((centerx,centery,height))
+    ## Final face/vertex pass
+    vert3 = len(dvertices)-1
+    Interior[vert3] = []
+    for vi,vert in enumerate(walk):
+##        cycle = [vert3]
+##        verti = vertices.index(vert)
+        vert1 = vert
+##        Interior[vert3].append(vert1)
+##        cycle += Interior[vert1]
+##        Interior[vert1] = cycle
+##        vindex = walk.index(vert)     
+        vert2 = None
+        if vi == 0:
+            vert2 = walk[len(walk)-1]
+        else:
+            vert2 = walk[vi-1]
+##        vnc = walk[vindexn]
+##        vni = vertices.index(vnc)
+##        vert2 = vni + index
+        face = (vert1,vert3,vert2)
+        efaces.append(face)
 
 meshName = "DualGraphSubdividePolygon"
 obName = "DualGraphSubdividePolygonObj"
@@ -301,3 +278,4 @@ ob.location = bpy.context.scene.cursor_location
 bpy.context.scene.objects.link(ob)
 me.from_pydata(dvertices,[],efaces)      
 me.update(calc_edges=True)             
+
