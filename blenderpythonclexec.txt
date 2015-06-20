@@ -31,4 +31,5 @@ at python console run:
 >> sys.path.append("/home/strangequark/BlenderPythonScripts")
 
 Then run as usual 
-exec(compile(open(filename4).read(), filename4, 'exec')) 
+exec(compile(open(filename4).read(), filename4, 'exec'))
+exec(compile(open(filename9).read(), filename9, 'exec')) 

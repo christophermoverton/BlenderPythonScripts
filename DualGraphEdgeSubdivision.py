@@ -2,14 +2,16 @@ import random
 ##import bpy
 import math
 
-Subdivisions = 1
-Height = .9
-MaxScaleIterations = 5
+Subdivisions = 3
+Height = .05
+MaxScaleIterations = 10
 Terrace = True
 Triangulated = False
 Peak = True
 Scale = .95
-SmoothJaggedness = .5  ## Higher factor means less jagged polygon randomization
+SmoothJaggedness = 20  ## Higher factor means less jagged polygon randomization
+Flatten = True
+Flatteniterations = 1
 if Terrace:
     MaxScaleIterations *= 2
 ## This algorithm is an extension of CirclePackDualGraph2.py
@@ -62,6 +64,31 @@ def addinteriorcycle(cycle,Interior,vertex, order):
     elif order == 7:
         Interior[vertex] += cycle
 
+def Centroid(walk):
+    ## Compute A  for a non self intersecting closed polygon
+    A = 0
+    i = 0
+    for vert in walk:
+        x,y = vert
+        if i == len(walk)-1:
+            xp1,yp1 = walk[0]
+        else:
+            xp1,yp1 = walk[walk.index(vert)+1]
+        A += x*yp1-xp1*y
+    A*=.5
+    Cx = 0
+    Cy = 0
+    for vert in walk:
+        x,y = vert
+        if i == len(walk)-1:
+            xp1,yp1 = walk[0]
+        else:
+            xp1,yp1 = walk[walk.index(vert)+1]
+        Cx += (x+xp1)*(x*yp1-xp1*y)
+        Cy += (y+yp1)*(x*yp1-xp1*y)
+    Cx *= 1/(6*A)
+    Cy *= 1/(6*A)
+    return Cx,Cy
 
 
 dvertices = vertices[0:len(vertices)]
@@ -148,9 +175,17 @@ for findex, face in enumerate(dfaces):
         rscale = random.uniform(.6,.9999)
         if Terrace:
             if i % 2 == 0:
-                height += random.random()*Height
+                if Flatten:
+                    if i > Flatteniterations:
+                        height += random.random()*Height
+                else:
+                    height += random.random()*Height
         else:
-            height += random.random()*Height
+            if Flatten:
+                if i > Flatteniterations:
+                    height += random.random()*Height
+            else:
+                height += random.random()*Height
         for vi, vert in enumerate(walk):
  
             x,y,z = dvertices[vert]
