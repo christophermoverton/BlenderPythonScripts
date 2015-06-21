@@ -117,7 +117,7 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
 ##    centerx,centery = centroid
     i = 0
     height = 0
-    prevedge = (walk[0],walk[1])
+    prevedge = (walk[len(walk)-1],walk[0])
     owalk = walk[0:len(walk)]  ## original walk for tracking interedge nodes
     owalkmap = {}
     interFace = []
@@ -132,10 +132,10 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
         edge = (walk[nvi],vert)
         if bedgetoface[edge] != prevFace:
             vert1, vert2 = prevedge
-            if vert1 in list(prevedge):
-                interFace.append(vert1)
+            if vert in list(prevedge):
+                interFace.append(vert)
             else:
-                interFace.append(vert2)
+                interFace.append(walk[nvi])
         center,radius = nodetofaceind[bedgetoface[edge]]
         cx = center.real
         cy = center.imag
@@ -164,7 +164,7 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
             else:
                 height += random.random()*Height
         for vi, vert in enumerate(walk):
-            print('passed:', passed)
+##            print('passed:', passed)
             if vi == 0:
                 nvert = walk[len(walk)-1]
                 
@@ -194,7 +194,7 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
 ##                    else:
 ##                        joinVert = nvertices[len(nvertices)-1]
             if passed >= 2:
-                print('hit')
+##                print('hit')
                 joinVert = nvertices[len(nvertices)-1]
                 
                 x,y,z = vertices[nvert]
@@ -255,7 +255,11 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
             if vi == 0:
                 ##vindexn = len(walk)-1
                 if not passed >= 2:
-                    vert3 = len(vertices)-1+len(walk)-1
+                    if i == 0:
+                        vert3 = len(vertices)-1+len(walk)-1+len(interFace)
+                        print('vert3: ', vert3)
+                    else:
+                        vert3 = len(vertices)-1+len(walk)-1
                 
                 vert4 = walk[len(walk)-1]
             else:
@@ -323,13 +327,13 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
                     else:
                         
                         face = (vert3,joinVert,vert4,vert)
-                        print('hit')
+                        
                     faces.append(face)
                     if not vert in interFace:
                         passed = False
-                    print('vert3: ', vert3)
-                    print('joinVert: ', joinVert)
-                    print('vert2: ', vert2)
+##                    print('vert3: ', vert3)
+##                    print('joinVert: ', joinVert)
+##                    print('vert2: ', vert2)
                     owalkmap[(joinVert,vert3)] = None
             if passed:
                 passed += 1
@@ -427,7 +431,8 @@ for vind in mainwalk:
 ## let's test rescaling and add new faces to mainwalk
 ffaces = []
 ##centroid = (Cx,Cy)
-Rescalewalk(mainwalk,ffaces,dvertices, nodetofaceind,bedgetoface, 3)
+evertices = dvertices[0:len(dvertices)]
+Rescalewalk(mainwalk,ffaces,evertices, nodetofaceind,bedgetoface, 2)
 
 bvertices = []
 
@@ -650,6 +655,6 @@ me = bpy.data.meshes.new(meshName)
 ob = bpy.data.objects.new(obName, me)
 ob.location = bpy.context.scene.cursor_location
 bpy.context.scene.objects.link(ob)
-me.from_pydata(dvertices,[],ffaces)      
+me.from_pydata(evertices,[],ffaces)      
 me.update(calc_edges=True)             
 
