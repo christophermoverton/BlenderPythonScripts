@@ -5,7 +5,7 @@ import math
 Subdivisions = 3
 Height = .05
 MaxScaleIterations = 10
-Terrace = True
+Terrace = False
 Triangulated = False
 Peak = True
 Scale = .95
@@ -167,10 +167,13 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
 ##            print('passed:', passed)
             if vi == 0:
                 nvert = walk[len(walk)-1]
-                
-                
+                nvert2 = walk[len(walk)-2]
             else:
                 nvert = walk[vi-1]
+                if vi-1 == 0:
+                    nvert2 = walk[len(walk)-1]
+                else:
+                    nvert2 = walk[vi-2]
                 
             edge = (nvert,vert)
             if owalkmap[edge] == None:
@@ -325,18 +328,21 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
                     if i == 0:
                         face = (vert3,joinVert,vert4)
                     else:
-                        
-                        face = (vert3,joinVert,vert4,vert)
+                        face = (vert4,vert3,joinVert,nvert2)
+                        ##face = (vert3,joinVert,vert4,vert)
                         
                     faces.append(face)
                     if not vert in interFace:
                         passed = False
+
 ##                    print('vert3: ', vert3)
 ##                    print('joinVert: ', joinVert)
 ##                    print('vert2: ', vert2)
                     owalkmap[(joinVert,vert3)] = None
             if passed:
                 passed += 1
+##            if vert in interFace:
+##                passed = 1
         ##prevwalk = walk[0:len(walk)]
         print(list(owalkmap.keys()))
         print(nvertices)
