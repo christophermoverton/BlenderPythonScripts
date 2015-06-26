@@ -2,14 +2,14 @@ import random
 ##import bpy
 import math
 
-Subdivisions = 3
-Height = .05
+Subdivisions = 2
+Height = .15
 MaxScaleIterations = 10
-Terrace = False
+Terrace = True
 Triangulated = False
-Peak = True
-Scale = .95
-SmoothJaggedness = 20  ## Higher factor means less jagged polygon randomization
+Peak = False
+Scale = .99
+SmoothJaggedness = 2.0  ## Higher factor means less jagged polygon randomization
 Flatten = True
 Flatteniterations = 1
 if Terrace:
@@ -362,7 +362,9 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
 ## ordered as desired until we have completed the cycle.
 bedges = []
 bverttoedges = {}
-bedgetoface = {}
+bedgetoface = {}  ## map for mainwalk
+cedgetoface = {} ## general map
+cverttoedges = {} ## general vertex to edges map
 dvertices = vertices[0:len(vertices)]
 dfaces = faces[0:len(faces)]
 
@@ -400,6 +402,21 @@ for findex,face in enumerate(dfaces):
                 bverttoedges[nn].append((vi,nn))
             else:
                 bverttoedges[nn] = [(vi,nn)]
+        if vi in cverttoedges:
+            t1 = (vi,nn) in cverttoedges[vi]
+            t2 = (nn,vi) in cverttoedges[vi]
+            if not t1 and not t2:
+                cverttoedges[vi].append((vi,nn))
+        else:
+            cverttoedges[vi] = [(vi,nn)]
+        if nn in cverttoedges:
+            t1 = (vi,nn) in cverttoedges[nn]
+            t2 = (nn,vi) in cverttoedges[nn]
+            if not t1 and not t2:
+                cverttoedges[nn].append((vi,nn))
+        else:
+            cverttoedges[nn] = [(vi,nn)]
+        cedgetoface[(vi,nn)] = findex
 
 ## walk the main cycle
 startedge = bedges[0]
@@ -411,6 +428,7 @@ for edge in bverttoedges[start]:
         end, cvert = edge
 i = 0  ## iterator to prevent a just in case endless loop for testing
 mainwalk = [start,nextv]
+
 cedge = startedge
 nextvert = nextv
 while nextvert != end and i < 2000:
@@ -426,6 +444,7 @@ while nextvert != end and i < 2000:
             break
     i += 1
 
+
 ## compute the centroid of the mainwalk
 ## compile the vertex positions of the mainwalk
 mainwalkpos = []
@@ -433,18 +452,64 @@ for vind in mainwalk:
     mainwalkpos.append(dvertices[vind])
 
 ##Cx,Cy = Centroid(mainwalkpos)
-
+prevedge = (mainwalk[len(mainwalk)-1],mainwalk[0])
+owalk = mainwalk[0:len(mainwalk)]  ## original walk for tracking interedge nodes
+owalkmap = {}
+conectedgewalk = []
+interFace = []
+## initialize owalkmap
+prevFace = bedgetoface[prevedge]
+for vi, vert in enumerate(mainwalk):
+    if vi == 0:
+        nvi = len(mainwalk)-1
+    else:
+        nvi = vi-1
+##        edge = (vert,walk[nvi])
+    edge = (mainwalk[nvi],vert)
+    if bedgetoface[edge] != prevFace:
+        vert1, vert2 = prevedge
+        if vert in list(prevedge):
+            interFace.append(vert)
+        else:
+            interFace.append(mainwalk[nvi])
+    center,radius = nodetofaceind[bedgetoface[edge]]
+    cx = center.real
+    cy = center.imag
+    owalkmap[(mainwalk[nvi],vert)] = (cx,cy)
+    prevFace = bedgetoface[edge]
+    prevedge = edge
+    elist = cverttoedges[vert]
+    for edg in elist:
+        v1,v2 = edg
+        edg2 = (v2,v1)
+        elist2 = cvert
+        t1 = edg in bverttoedges[vert]
+        t2 = edg2 in bverttoedges[vert]
+        if not t1 and not t2:
+            conectedgewalk.append(edg)  ## these are disjoint connecting edges
+            ## of the main walk
 ## let's test rescaling and add new faces to mainwalk
 ffaces = []
 ##centroid = (Cx,Cy)
 evertices = dvertices[0:len(dvertices)]
-Rescalewalk(mainwalk,ffaces,evertices, nodetofaceind,bedgetoface, 2)
+Rescalewalk(mainwalk,ffaces,evertices, nodetofaceind,bedgetoface, 4)
 
+## what needs to be done.  Since at the moment edge subdivisions
+## on the original cell polygon is done neither in main walk order,
+## and may include interior cells (without priortization), one possible
+## non disruptive method to the present algorithm below is to 2nd pass
+## heightmap fix the main walk and subsequent interior points on
+## a z height translation pass.  Basically while working subdivision
+## will need another map which relates the cell polygons original
+## 2 node edge's mapped to all subsequent interior scaled edges.
+## the 2nd pass the uses these maps to assign heightmap positions
+## in given scaled intervals on the main walk, for instance.
 bvertices = []
 
 edges = {}
 completededges = []
 edgetonewside = {}
+edgetonewsiderev = {}
 efaces = []
 i = 0
 for findex, face in enumerate(dfaces):
@@ -504,6 +569,9 @@ for findex, face in enumerate(dfaces):
                 if not bi in newside:
                     newside.append(bi)
             edgetonewside[(nn,vi)] = newside[::-1]
+            
+            for v in newside:
+                edgetonewsiderev[v] = ((nn,vi),0)
         else:
             newside = edgetonewside[(vi,nn)]
             for v in newside:
@@ -559,9 +627,12 @@ for findex, face in enumerate(dfaces):
 ##            nvertices2.append((xs,ys))
 ##            nvertices.append((xs, ys, height))
             nvertices.append(len(dvertices)-1)
+            epair, sind = edgetonewsiderev[vert]
+            edgetonewsiderev[len(dvertices)-1] = (epair,i+1)
 ##            if i == 0:
 ##                continue
             vert2 = len(dvertices)-1
+            
 ##            verti = dvertices.index(vert)
             vert1 = vert
 ##            vert2 = verti+index
@@ -654,6 +725,51 @@ for findex, face in enumerate(dfaces):
 ##        vert2 = vni + index
         face = (vert1,vert3,vert2)
         efaces.append(face)
+        
+height = 0
+heights = {}
+heights[0] = 0.0
+walkfaces = list(bedgetoface.values())
+for i in range(1,MaxScaleIterations+1):
+    height += random.random()*Height
+    heights[i] = height
+
+for vi,vert in enumerate(dvertices):
+    if vi in edgetonewsiderev:
+        epair, eindex = edgetonewsiderev[vi]
+        e1,e2 = epair
+        epair2 = (e2,e1)
+        t1 = epair in owalkmap
+        t2 = epair2 in owalkmap
+        faceind = None
+        faceind2 = None
+        if epair in cedgetoface:
+            faceind = cedgetoface[epair]
+        if epair2 in cedgetoface:
+            faceind2 = cedgetoface[epair2]
+        t3 = faceind in walkfaces
+        t4 = faceind2 in walkfaces
+        if t1 or t2 or t3 or t4:
+            if t1 or t2:
+                height = heights[eindex]
+            else:
+                if eindex == 0:
+                    height = heights[MaxScaleIterations-1]
+                else:
+                    height = heights[eindex]
+##            print(height)
+        else:
+            height = heights[MaxScaleIterations-1]
+        lvert = list(vert)
+        nvert =  [lvert[0],lvert[1],lvert[2]+ height]
+        dvertices[vi] = tuple(nvert)
+    else:
+        height = heights[MaxScaleIterations-1]
+        
+        lvert = list(vert)
+        nvert = [lvert[0],lvert[1],lvert[2] + height]
+        
+        dvertices[vi] = tuple(nvert)        
 
 meshName = "DualGraphSubdividePolygon"
 obName = "DualGraphSubdividePolygonObj"
@@ -661,6 +777,6 @@ me = bpy.data.meshes.new(meshName)
 ob = bpy.data.objects.new(obName, me)
 ob.location = bpy.context.scene.cursor_location
 bpy.context.scene.objects.link(ob)
-me.from_pydata(evertices,[],ffaces)      
+me.from_pydata(dvertices,[],efaces)      
 me.update(calc_edges=True)             
 
