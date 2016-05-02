@@ -7,7 +7,7 @@ global dimx
 global dimy
 dimx = 1000
 dimy = 1300
-totalnodes = 10
+totalnodes = 15 ## 10 originally
 meshName = "Mondrian"
 obName = "MondrianObj"
 me = bpy.data.meshes.new(meshName)

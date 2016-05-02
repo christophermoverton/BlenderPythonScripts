@@ -352,6 +352,19 @@ def Rescalewalk(walk,faces,vertices, nodetofaceind,
         
         i+= 1    
 
+def findSubWalk(parentwalk, pwalkconnect):
+    ## pwalkconnect is vertindex keyed map to connecting edges pair dictionary
+    cwalk = []
+    for i,vind in enumerate(parentwalk):
+        p1,p2 = pwalkconnect[vind]
+        if p1 == vind:
+            if not p2 in cwalk:
+                cwalk.append(p2)
+        else:
+            if not p1 in cwalk:
+                cwalk.append(p1)
+    return cwalk
+            
 ## Grouping cells.
 ## Find the base conglomerate cycle.
 ## Edge tuples are keyed according to face index if any edge tuple
@@ -456,6 +469,7 @@ prevedge = (mainwalk[len(mainwalk)-1],mainwalk[0])
 owalk = mainwalk[0:len(mainwalk)]  ## original walk for tracking interedge nodes
 owalkmap = {}
 conectedgewalk = []
+conectvedgewalk = {}
 interFace = []
 ## initialize owalkmap
 prevFace = bedgetoface[prevedge]
@@ -487,6 +501,8 @@ for vi, vert in enumerate(mainwalk):
         t2 = edg2 in bverttoedges[vert]
         if not t1 and not t2:
             conectedgewalk.append(edg)  ## these are disjoint connecting edges
+            conectvedgewalk[v1] = edg
+            conectvedgewalk[v2] = edg
             ## of the main walk
 ## let's test rescaling and add new faces to mainwalk
 ffaces = []
