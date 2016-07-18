@@ -5,7 +5,8 @@ import random
 
 ## run SelectionVertices.py script prior to running this in console
 
-def gravity(z,vi):
+def gravity(z,vi,t):
+   ## t is time since tinitial
    return .5*-9.8*t*t + vi*t + z
 
 def solvet(z, vi):
@@ -66,7 +67,12 @@ for i, co in enumerate(coorddat):
    bpy.ops.object.duplicate()
    bpy.context.object.location = co
    for frame in range(1, framedat[i]):
-      bpy.ops.transform.translate(value=(-0.5*pi, ), axis=(-1, 0, 0))
+      tstep = float(frame)/30.0
+      h = gravity(co.z,vi,tstep)
+      th = co.z-h
+      bpy.ops.transform.translate(value=(0, 0, -h))
+      # create keyframe
+      bpy.ops.anim.keyframe_insert_menu(type='Location')
    
  
 
