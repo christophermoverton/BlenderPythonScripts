@@ -60,10 +60,10 @@ for i in range(0,numFallingObjs):
    tfs1 = tf1/30.0
    h = solveh(vi,tfs1)
    newz = vdat[(x,y)]+h
-   framedat.append(tfs1)
+   framedat.append(tf1)
    coorddat.append((x,y,newz))
    del selvertices2[vpick]
-   
+Scene_Name = bpy.context.scene.name   
 bpy.ops.object.mode_set(mode='OBJECT')
 bpy.data.objects['Land'].select = False
 bpy.context.scene.update()
@@ -80,21 +80,28 @@ for i, co in enumerate(coorddat):
    obj = bpy.data.objects[objname]
    obj.location = co[0:len(co)]
    print(obj.location)
-   bpy.context.scene.update() 
+##   print(bpy.ops.anim.keying_set_add())
+##   print(bpy.ops.anim.keying_set_active_set(i)) 
+##   print(bpy.ops.anim.keying_set_path_add())
+   print(bpy.context.scene.update()) 
+   print(obj.keyframe_insert(data_path="location"))
    ## if there are existing key frames use this
-   for num in range(0, 30):
-      bpy.context.active_object.keyframe_delete('location', frame=num)
+##   for num in range(0, 30):
+##      bpy.context.active_object.keyframe_delete('location', frame=num)
    for frame in range(1, int(framedat[i])):
       tstep = float(frame)/30.0
-      h = gravity(co.z,vi,tstep)
-      th = co.z-h
-      bpy.ops.transform.translate(value=(0, 0, -h))
-      bpy.context.scene.update() 
+      h = gravity(co[2],vi,tstep)
+      th = co[2]-h
+      print(bpy.ops.transform.translate(value=(0, 0, -th)))
+      bpy.context.scene.update()
+      bpy.data.scenes[Scene_Name].frame_set(frame)
       # create keyframe
-      bpy.ops.anim.keyframe_insert_menu(type='Location')
+      print(obj.keyframe_insert(data_path="location"))
       bpy.context.scene.update() 
    obj.select=False
    bpy.context.scene.update() 
+   
+   bpy.ops.object.select_all(action='DESELECT')
    
  
 
