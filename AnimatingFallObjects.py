@@ -70,7 +70,16 @@ for i, co in enumerate(coorddat):
    bpy.context.scene.objects.active = bpy.data.objects['W_rfe203']  ##obj
    bpy.context.scene.update() 
    bpy.ops.object.duplicate()
-   bpy.context.object.location = co
+   bpy.ops.object.make_single_user(type='SELECTED_OBJECTS',
+                                   object=True, obdata=True,animation=True)
+   bpy.context.scene.update()
+   obj = bpy.context.active_object
+   obj.location = co[0:len(co)]
+   print(obj.location)
+   bpy.context.scene.update() 
+   ## if there are existing key frames use this
+   for num in range(0, 30):
+      bpy.context.active_object.keyframe_delete('location', frame=num)
    for frame in range(1, int(framedat[i])):
       tstep = float(frame)/30.0
       h = gravity(co.z,vi,tstep)
@@ -78,6 +87,8 @@ for i, co in enumerate(coorddat):
       bpy.ops.transform.translate(value=(0, 0, -h))
       # create keyframe
       bpy.ops.anim.keyframe_insert_menu(type='Location')
+      bpy.context.scene.update() 
+   obj.select=False
    
  
 
