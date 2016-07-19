@@ -4,6 +4,9 @@ import math
 import random
 
 ## run SelectionVertices.py script prior to running this in console
+## all modifiers (e.g., deform, smooth or anything else) must be applied to the mesh computed
+## before using script.  Height data read from mesh otherwise is done so on pre modified mesh.
+## 
 
 def gravity(z,vi,t):
    ## t is time since tinitial
