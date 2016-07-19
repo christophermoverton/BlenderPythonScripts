@@ -81,6 +81,7 @@ for i, co in enumerate(coorddat):
                                    object=True, obdata=True,animation=True)
    bpy.context.scene.update()
    objname = "W_rfe203"+".00"+str(i+1)
+   bpy.data.scenes[Scene_Name].frame_set(0)
    obj = bpy.data.objects[objname]
    obj.location = co[0:len(co)]
    print(obj.location)
