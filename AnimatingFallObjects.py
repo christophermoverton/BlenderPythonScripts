@@ -91,10 +91,13 @@ for i, co in enumerate(coorddat):
    for frame in range(1, int(framedat[i])):
       tstep = float(frame)/30.0
       h = gravity(co[2],vi,tstep)
-      th = co[2]-h
-      print(bpy.ops.transform.translate(value=(0, 0, -th)))
-      bpy.context.scene.update()
       bpy.data.scenes[Scene_Name].frame_set(frame)
+      print(h)
+      ##th = co[2]-h
+      ##print(bpy.ops.transform.translate(value=(0, 0, -th)))
+      obj.location = (obj.location.x, obj.location.y, h)
+      bpy.context.scene.update()
+      
       # create keyframe
       print(obj.keyframe_insert(data_path="location"))
       bpy.context.scene.update() 
