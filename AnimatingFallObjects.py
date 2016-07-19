@@ -27,7 +27,7 @@ def solvet(z, vi):
    
 def solveh(vi,t):
    return .5*9.8*t*t - vi*t
-numFallingObjs = 49
+numFallingObjs = 5
 fobj_list = []
 vi = -9.8
 tf = 7.0 ## in frames 30 sec  per frame is the standard so 1 frame equals 1/30.0 seconds
@@ -35,10 +35,10 @@ tf = 7.0 ## in frames 30 sec  per frame is the standard so 1 frame equals 1/30.0
 tfs = 7.0/30.0
 ## read vertex data on terrain
 vdat = {}
-objname = "land"
+objname = "Land"
 obj = bpy.data.objects[objname]
 ## populate object names 
-for i in range(0,numFallingobjs):
+for i in range(0,numFallingObjs):
    fobj_list.append("D"+str(i))
 
 
@@ -47,26 +47,31 @@ for v in obj.data.vertices:
    if (x,y) in vdat:
    
       vdat[(x,y)] = max(vdat[(x,y)],z)
+   else:
+      vdat[(x,y)] = z
 
 selvertices2 = selvertices[0:len(selvertices)]
 framedat = []
 coorddat = []
-for i in range(0,48):
-   vpick = random.randomint(0,len(selvertices2))
-   x,y,z = obj.matrix_world*selvertices2[vpick].co 
+for i in range(0,numFallingObjs):
+   vpick = random.randint(0,len(selvertices2))
+   x,y,z = selvertices2[vpick] 
    tf1 = float(tf) + float(random.randint(0,5))
    tfs1 = tf1/30.0
-   h = solveh(vi,t)
+   h = solveh(vi,tfs1)
    newz = vdat[(x,y)]+h
    framedat.append(tfs1)
-   coorddat.append((x,y,z))
+   coorddat.append((x,y,newz))
    del selvertices2[vpick]
-
+   
+bpy.ops.object.mode_set(mode='OBJECT')
+bpy.data.objects['Land'].select = False
 for i, co in enumerate(coorddat):
    bpy.context.scene.objects.active = bpy.data.objects['W_rfe203']  ##obj
+   bpy.context.scene.update() 
    bpy.ops.object.duplicate()
    bpy.context.object.location = co
-   for frame in range(1, framedat[i]):
+   for frame in range(1, int(framedat[i])):
       tstep = float(frame)/30.0
       h = gravity(co.z,vi,tstep)
       th = co.z-h
