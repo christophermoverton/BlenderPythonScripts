@@ -46,7 +46,7 @@ vi = -9.8
 tf = 7.0 ## in frames 30 sec  per frame is the standard so 1 frame equals 1/30.0 seconds
 
 tfs = 7.0/30.0
-dampingfactor = .7
+dampingfactor = .1
 bounces = 1
 ## read vertex data on terrain
 vdat = {}
@@ -78,14 +78,17 @@ for i in range(0,numFallingObjs):
    h = solveh(vi,tfs1)
    vf = solvevf(vi,tfs1)
    t2 = solvet2(-vf*dampingfactor,0.0)
-   hf = solvehf(vf,t2) ## bounce
+   print("t2: " +str(t2))
+   print("vf: " +str(-vf))
+   hf = solvehf(-vf*dampingfactor,t2) ## bounce
    print("Solve Height: " + str(h))
    print("original height: " + str(vdat[(x,y)]))
    print("time: " + str(tfs1))
+   print("bounce final height: " + str(hf))
    newz = vdat[(x,y)]+h
    framedat.append(tf1)
    coorddat.append((x,y,newz))
-   boundat.append((vdat[(x,y)],hf+vdat[(x,y)],int(t2*30.0)))
+   bouncedat.append((vdat[(x,y)],hf+vdat[(x,y)],int(t2*30.0)))
    del selvertices2[vpick]
 Scene_Name = bpy.context.scene.name   
 bpy.ops.object.mode_set(mode='OBJECT')
