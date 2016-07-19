@@ -66,14 +66,18 @@ for i in range(0,numFallingObjs):
    
 bpy.ops.object.mode_set(mode='OBJECT')
 bpy.data.objects['Land'].select = False
+bpy.context.scene.update()
 for i, co in enumerate(coorddat):
-   bpy.context.scene.objects.active = bpy.data.objects['W_rfe203']  ##obj
+   bpy.data.objects['W_rfe203'].select=True  ##obj
    bpy.context.scene.update() 
-   bpy.ops.object.duplicate()
+   bpy.ops.object.duplicate(linked=False)
+   bpy.data.objects['W_rfe203'].select=False
+   bpy.context.scene.update()
    bpy.ops.object.make_single_user(type='SELECTED_OBJECTS',
                                    object=True, obdata=True,animation=True)
    bpy.context.scene.update()
-   obj = bpy.context.active_object
+   objname = "W_rfe203"+".00"+str(i+1)
+   obj = bpy.data.objects[objname]
    obj.location = co[0:len(co)]
    print(obj.location)
    bpy.context.scene.update() 
@@ -85,10 +89,12 @@ for i, co in enumerate(coorddat):
       h = gravity(co.z,vi,tstep)
       th = co.z-h
       bpy.ops.transform.translate(value=(0, 0, -h))
+      bpy.context.scene.update() 
       # create keyframe
       bpy.ops.anim.keyframe_insert_menu(type='Location')
       bpy.context.scene.update() 
    obj.select=False
+   bpy.context.scene.update() 
    
  
 
