@@ -27,6 +27,7 @@ def solvet(z, vi):
    
 def solveh(vi,t):
    return .5*9.8*t*t - vi*t
+   
 numFallingObjs = 5
 fobj_list = []
 vi = -9.8
@@ -59,6 +60,9 @@ for i in range(0,numFallingObjs):
    tf1 = float(tf) + float(random.randint(0,5))
    tfs1 = tf1/30.0
    h = solveh(vi,tfs1)
+   print("Solve Height: " + str(h))
+   print("original height: " + str(vdat[(x,y)]))
+   print("time: " + str(tfs1))
    newz = vdat[(x,y)]+h
    framedat.append(tf1)
    coorddat.append((x,y,newz))
@@ -88,7 +92,7 @@ for i, co in enumerate(coorddat):
    ## if there are existing key frames use this
 ##   for num in range(0, 30):
 ##      bpy.context.active_object.keyframe_delete('location', frame=num)
-   for frame in range(1, int(framedat[i])):
+   for frame in range(1, int(framedat[i])+1):
       tstep = float(frame)/30.0
       h = gravity(co[2],vi,tstep)
       bpy.data.scenes[Scene_Name].frame_set(frame)
