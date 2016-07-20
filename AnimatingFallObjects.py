@@ -40,17 +40,18 @@ def solvehf(vi,t):
 def solvevf(vi,t):
    return -9.8*t + vi
    
-numFallingObjs = 5
+numFallingObjs = 50
 fobj_list = []
-vi = -9.8
+vi = 0.0
 tf = 7.0 ## in frames 30 sec  per frame is the standard so 1 frame equals 1/30.0 seconds
 
 tfs = 7.0/30.0
-dampingfactor = .1
+dampingfactor = .07
 bounces = 1
 ## read vertex data on terrain
 vdat = {}
 objname = "Land"
+objname2 = "Dk"
 obj = bpy.data.objects[objname]
 ## populate object names 
 for i in range(0,numFallingObjs):
@@ -66,6 +67,7 @@ for v in obj.data.vertices:
       vdat[(x,y)] = z
 
 selvertices2 = selvertices[0:len(selvertices)]
+print("length of selection vertices: " +str(len(selvertices)))
 framedat = []
 coorddat = []
 bouncedat = []  ## set as (initial_height,final_height,timetofinalheightinframes) tuple
@@ -95,15 +97,18 @@ bpy.ops.object.mode_set(mode='OBJECT')
 bpy.data.objects['Land'].select = False
 bpy.context.scene.update()
 for i, co in enumerate(coorddat):
-   bpy.data.objects['W_rfe203'].select=True  ##obj
+   bpy.data.objects[objname2].select=True  ##obj
    bpy.context.scene.update() 
-   bpy.ops.object.duplicate(linked=False)
-   bpy.data.objects['W_rfe203'].select=False
-   bpy.context.scene.update()
+   ##bpy.ops.object.duplicate(linked=False)
+   bpy.ops.object.duplicate()
    bpy.ops.object.make_single_user(type='SELECTED_OBJECTS',
-                                   object=True, obdata=True,animation=True)
+                                   object=True,animation=True)
+   bpy.data.objects[objname2].select=False
    bpy.context.scene.update()
-   objname = "W_rfe203"+".00"+str(i+1)
+##   bpy.ops.object.make_single_user(type='SELECTED_OBJECTS',
+##                                   object=True, obdata=True,animation=True)
+   bpy.context.scene.update()
+   objname = objname2+"."+str(i+1).zfill(3)
    bpy.data.scenes[Scene_Name].frame_set(0)
    obj = bpy.data.objects[objname]
    obj.location = co[0:len(co)]
