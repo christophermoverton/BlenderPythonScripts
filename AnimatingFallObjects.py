@@ -51,7 +51,8 @@ bounces = 1
 ## read vertex data on terrain
 vdat = {}
 objname = "Land"
-objname2 = "Dk"
+objname2 = "Dk2"
+frameStart = 87
 obj = bpy.data.objects[objname]
 ## populate object names 
 for i in range(0,numFallingObjs):
@@ -121,8 +122,8 @@ for i, co in enumerate(coorddat):
    ## if there are existing key frames use this
 ##   for num in range(0, 30):
 ##      bpy.context.active_object.keyframe_delete('location', frame=num)
-   for frame in range(1, int(framedat[i])+1):
-      tstep = float(frame)/30.0
+   for frame in range(frameStart, frameStart+int(framedat[i])+1):
+      tstep = float(frame-frameStart)/30.0
       h = gravity(co[2],vi,tstep)
       bpy.data.scenes[Scene_Name].frame_set(frame)
       print(h)
